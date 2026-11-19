@@ -101,6 +101,23 @@ export interface MoveResult {
   updatedField: "updated" | "updated+completed";
 }
 
+/** moveStatus 返回值（design §4.7）：成功返回 MoveOutcome，失败返回 AppError */
+export type MoveOutcome =
+  | {
+      ok: true;
+      /** 流转实际写入（rename 后的文件快照，design §4.7） */
+      moved: boolean;
+      from: ReqStatus | TaskStatus | ProjectStatus;
+      to: string;
+      /** 副作用：状态流转副作用 updated=today 是否设置（design §4.7, 01-数据规范 §3.1–3.3） */
+      updated: boolean;
+      /** 副作用：completed=today 是否设置（仅 task 的 todo→done / doing→done，01-数据规范 §3.3） */
+      completedSet: boolean;
+      file: FileEntry;
+      newStatuses: Array<{ id: string; status: string }>;
+    }
+  | { ok: false; error: AppError };
+
 export interface ValidateResult {
   ok: boolean;
   errors: Array<{

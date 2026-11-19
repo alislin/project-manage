@@ -1,0 +1,44 @@
+import { describe, it, expect } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { atomicWriteFile, isSelfWrite, registerSelfWrite } from "../src/index";
+
+/** TC-02 · 02-core §6.1 writer + §5.3 自写（TC-02-023） */
+
+function makeTempRoot(prefix: string): string {
+  const base = path.join(os.tmpdir(), "opencode");
+  fs.mkdirSync(base, { recursive: true });
+  return fs.mkdtempSync(path.join(base, prefix));
+}
+
+describe("TC-02 writer", () => {
+  it("TC-02-023: registerSelfWrite/isSelfWrite（最多 64 条 FIFO 淘汰）", () => {
+    // 注册 N>64（如 70 条）路径
+    for (let i = 0; i < 70; i++) {
+      registerSelfWrite(`/fake/path-${i}.md`, 1000 + i);
+    }
+    // 最早的条目被淘汰（缓存 FIFO 淘汰最早）
+    expect(isSelfWrite("/fake/path-0.md", 1000)).toBe(false);
+    expect(isSelfWrite("/fake/path-69.md", 1069)).toBe(true);
+    // 过期 mtime 匹配 → false
+    expect(isSelfWrite("/fake/path-69.md", 9999)).toBe(false);
+    expect(isSelfWrite("/fake/path-68.md", 1068)).toBe(true);
+  });
+
+  it("TC-02-013/014 unit: atomicWriteFile 正常与 E_CONFLICT（02-core §6.1）", () => {
+    const vault = makeTempRoot("vault-atomic-");
+    const abs = path.join(vault, "a.md");
+    fs.writeFileSync(abs, "before", "utf8");
+    const res = atomicWriteFile(abs, "after");
+    expect(res.ok).toBe(true);
+    expect(fs.readFileSync(abs, "utf8")).toBe("after");
+    // 冲突：传入的 expectedMtimeMs 不匹配当前 mtime
+    const cur = fs.statSync(abs).mtimeMs;
+    const conflict = atomicWriteFile(abs, "x", { expectedMtimeMs: cur + 5000 });
+    expect(conflict.ok).toBe(false);
+    if (!conflict.ok) expect(conflict.error.code).toBe("E_CONFLICT");
+    // selfWrite 登记（§5.3）
+    if (res.ok) expect(isSelfWrite(abs, res.written.mtimeMs)).toBe(true);
+  });
+});
