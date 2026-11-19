@@ -1,5 +1,5 @@
-import { err, ok, type AppResult } from "./types";
-import { E_SEQ_EXHAUSTED } from "./errors";
+import { err, ok, type AppResult } from "./types.js";
+import { E_SEQ_EXHAUSTED } from "./errors.js";
 
 /** 编号 id 前缀（01-数据规范 §1.5：REQ/TASK/INBOX） */
 export type NumberPrefix = "REQ" | "TASK" | "INBOX";

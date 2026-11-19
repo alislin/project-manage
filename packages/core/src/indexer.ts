@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
-import { parseNumberId } from "./id";
-import { parseFile, type ParseResult } from "./parser";
-import { classifyFile, scanTree } from "./scanner";
-import { ZInboxEntry, ZProject, ZRequirement, ZTask, type InboxEntry, type Project, type Requirement, type Task } from "./schema";
-import { normalizePath, type BrokenFile, type Config, type FileEntry, type UnnumberedFile, type VaultIndex } from "./types";
+import { parseNumberId } from "./id.js";
+import { parseFile, type ParseResult } from "./parser.js";
+import { classifyFile, scanTree } from "./scanner.js";
+import { ZInboxEntry, ZProject, ZRequirement, ZTask, type InboxEntry, type Project, type Requirement, type Task } from "./schema.js";
+import { normalizePath, type BrokenFile, type Config, type FileEntry, type UnnumberedFile, type VaultIndex } from "./types.js";
 import type { ZodIssue, ZodTypeAny } from "zod";
 
 // ---------------------------------------------------------------------------

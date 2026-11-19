@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { isSelfWrite } from "./writer";
-import { normalizePath, type FileEntry, type VaultScan } from "./types";
+import { isSelfWrite } from "./writer.js";
+import { normalizePath, type FileEntry, type VaultScan } from "./types.js";
 
 /** 文件分类结果（design §4.4 表 + 用户要求 classifyFile 含 inbox/archive 排除） */
 export type Classification =

@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import { ok, err, type AppResult, type Config } from "./types";
-import { E_CONFIG_INVALID } from "./errors";
+import { ok, err, type AppResult, type Config } from "./types.js";
+import { E_CONFIG_INVALID } from "./errors.js";
 
 /** pm.config.json 结构（02-core §4.1，plan §7：vaultPath/pmRoot/可选 defaultAuthor） */
 export const ZConfig = z.object({

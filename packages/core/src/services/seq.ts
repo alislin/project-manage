@@ -1,5 +1,5 @@
-import { allocateSeq } from "../id";
-import { ok, type AppResult, type VaultIndex } from "../types";
+import { allocateSeq } from "../id.js";
+import { ok, type AppResult, type VaultIndex } from "../types.js";
 
 /**
  * 编号分配（design §4.7, 01-数据规范 §1.5/§2.6）：

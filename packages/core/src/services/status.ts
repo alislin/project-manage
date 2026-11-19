@@ -1,10 +1,10 @@
 import fs from "node:fs";
 import matter from "gray-matter";
-import { E_CONFLICT, E_INVALID_TRANSITION, E_NOT_FOUND } from "../errors";
-import { reindexFile } from "../indexer";
-import { atomicWriteFile } from "../writer";
-import { ok, err, today, type AppResult, type FileEntry, type MoveOutcome, type VaultIndex } from "../types";
-import type { Project, Requirement, Task } from "../schema";
+import { E_CONFLICT, E_INVALID_TRANSITION, E_NOT_FOUND } from "../errors.js";
+import { reindexFile } from "../indexer.js";
+import { atomicWriteFile } from "../writer.js";
+import { ok, err, today, type AppResult, type FileEntry, type MoveOutcome, type VaultIndex } from "../types.js";
+import type { Project, Requirement, Task } from "../schema.js";
 
 /**
  * 流转前置表（design §4.7 + 01-数据规范 §3.1–3.3）。

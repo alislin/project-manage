@@ -1,6 +1,6 @@
-import { isPast, type Progress, type Stats, type TaskStats, type VaultIndex } from "../types";
-import type { ReqStatus, Task, TaskStatus } from "../schema";
-import { parseWikiLinks } from "../indexer";
+import { isPast, type Progress, type Stats, type TaskStats, type VaultIndex } from "../types.js";
+import type { ReqStatus, Task, TaskStatus } from "../schema.js";
+import { parseWikiLinks } from "../indexer.js";
 
 /** aggregate：todo/doing 且 due ≥ today 计入 onTrack（design §2.4 / 02-core §8 isPast/overdue） */
 function aggregate(tasks: Task[]): TaskStats {

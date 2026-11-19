@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { E_CONFLICT } from "./errors";
-import { normalizePath, type AppError, type FileEntry, type WriteConflict } from "./types";
+import { E_CONFLICT } from "./errors.js";
+import { normalizePath, type AppError, type FileEntry, type WriteConflict } from "./types.js";
 
 /**
  * 写入选项（design §4.6/§6.1）：

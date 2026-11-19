@@ -1,4 +1,4 @@
-import type { Project, Requirement, Task, InboxEntry, ProjectStatus, ReqStatus, TaskStatus } from "./schema";
+import type { Project, Requirement, Task, InboxEntry, ProjectStatus, ReqStatus, TaskStatus } from "./schema.js";
 
 // ===== 2.1 Config =====
 /** `pm.config.json` 结构（plan §7：{ vaultPath, pmRoot }，详设补充） */

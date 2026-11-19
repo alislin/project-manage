@@ -1,4 +1,4 @@
-import type { AppError } from "./types";
+import type { AppError } from "./types.js";
 
 /** 02-core §3.1 错误码（decisions.md 统一错误码体系表） */
 export type ErrorCode =

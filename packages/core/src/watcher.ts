@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import chokidar from "chokidar";
-import { isSelfWrite } from "./writer";
-import { normalizePath, type Config } from "./types";
+import { isSelfWrite } from "./writer.js";
+import { normalizePath, type Config } from "./types.js";
 
 /** 监听事件（design §4.5：onChange 增加或变化，onUnlink 删除） */
 export interface WatcherEvents {
