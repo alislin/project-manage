@@ -1,0 +1,19 @@
+{
+  "name": "@pm/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "pm": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest --passWithNoTests"
+  },
+  "dependencies": {
+    "@pm/core": "^0.0.0",
+    "commander": "^13"
+  }
+}
