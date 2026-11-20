@@ -129,6 +129,29 @@ export interface ValidateResult {
   checkedFiles: number;
 }
 
+// ===== 2.5b 一致性检查（03-cli §6.2/§6.3） =====
+export type CheckIssueCode =
+  | "dangling-wiki"
+  | "invalid-link-target"
+  | "id-conflict"
+  | "date-inverted"
+  | "invalid-frontmatter";
+
+export interface CheckIssue {
+  /** 绝对路径（03-cli §6.3） */
+  file: string;
+  /** 具体字段（可选，如 requirement/updated/due/id） */
+  field?: string;
+  code: CheckIssueCode;
+  message: string;
+}
+
+export interface CheckResult {
+  /** issues 为空 → true（03-cli §6.3） */
+  ok: boolean;
+  issues: CheckIssue[];
+}
+
 // ===== 2.6 搜索 =====
 export interface SearchResult {
   id: string;
@@ -142,6 +165,40 @@ export interface SearchResult {
 export interface SearchHit {
   q: string;
   results: SearchResult[];
+}
+
+// ===== 2.6b inbox 服务（03-cli §7.2/§7.4，01-数据规范 §7） =====
+export interface InboxListItem {
+  /** 如 INBOX-inbox-001 */
+  id: string;
+  /** YYYY-MM-DD */
+  created: string;
+  slug?: string;
+  tags: string[];
+  source?: string;
+  /** 相对 PM 根的 POSIX 路径，如 "inbox/2026-11-19-idea.md" */
+  file: string;
+  /** 正文第一行（首个非空行；空则空串，03-cli §7.2） */
+  bodyFirstLine: string;
+  /** 未归档 vs 已归档（03-cli §7.2 status，01-数据规范 §7.4） */
+  status: "active" | "archived";
+}
+
+export interface InboxListResult {
+  /** 按 created 降序（01-数据规范 §7.3 步骤 2） */
+  entries: InboxListItem[];
+  count: number;
+}
+
+export interface InboxArchiveResult {
+  archived: {
+    id: string;
+    /** 原绝对路径（03-cli §7.4） */
+    from: string;
+    /** 新绝对路径（PM/inbox/archive/<name>） */
+    to: string;
+    archivedDate: string;
+  };
 }
 
 // ===== 2.7 写冲突 =====

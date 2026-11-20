@@ -13,8 +13,14 @@ export type {
   MoveResult,
   MoveOutcome,
   ValidateResult,
+  CheckIssueCode,
+  CheckIssue,
+  CheckResult,
   SearchResult,
   SearchHit,
+  InboxListItem,
+  InboxListResult,
+  InboxArchiveResult,
   WriteConflict,
   AppResult,
   AppError,
@@ -25,6 +31,8 @@ export { parseFile, type ParseResult } from "./parser.js";
 export { buildIndex, reindexFile, deriveRequirementTasks, parseWikiLinks } from "./indexer.js";
 export { moveStatus, isValidTransition, moveLocks } from "./services/status.js";
 export { deriveStats } from "./services/stats.js";
+export { runCheck } from "./services/check.js";
+export { listInbox, archiveInboxEntry } from "./services/inbox.js";
 export { allocateId } from "./services/seq.js";
 export { atomicWriteFile, registerSelfWrite, isSelfWrite, type WriteOpts, type WriteResult } from "./writer.js";
 export { startWatcher, type WatcherEvents, type StartOptions } from "./watcher.js";
