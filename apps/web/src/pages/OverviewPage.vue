@@ -121,7 +121,7 @@ const moduleEmpty = computed(() => tasks.items.length === 0);
 
       <!-- 四图（06-web §7；空项目时各图空态文案，TC-06-024） -->
       <div class="pm-overview__grid">
-        <div class="pm-overview__cell">
+        <div class="pm-overview__cell" data-testid="overview-cell-ring">
           <h3 class="pm-overview__cell-title">任务完成率</h3>
           <PmChart
             :option="ringOption"
@@ -130,7 +130,7 @@ const moduleEmpty = computed(() => tasks.items.length === 0);
             height="300px"
           />
         </div>
-        <div class="pm-overview__cell">
+        <div class="pm-overview__cell" data-testid="overview-cell-funnel">
           <h3 class="pm-overview__cell-title">需求交付漏斗</h3>
           <PmChart
             :option="funnelOption"
@@ -139,7 +139,7 @@ const moduleEmpty = computed(() => tasks.items.length === 0);
             height="300px"
           />
         </div>
-        <div class="pm-overview__cell">
+        <div class="pm-overview__cell" data-testid="overview-cell-trend">
           <h3 class="pm-overview__cell-title">任务累计完成趋势（近 14 天）</h3>
           <PmChart
             :option="trendOption"
@@ -148,7 +148,7 @@ const moduleEmpty = computed(() => tasks.items.length === 0);
             height="300px"
           />
         </div>
-        <div class="pm-overview__cell">
+        <div class="pm-overview__cell" data-testid="overview-cell-module">
           <h3 class="pm-overview__cell-title">按模块任务分布</h3>
           <PmChart
             :option="moduleOption"

@@ -14,6 +14,7 @@ const ui = useUiStore();
         :key="t.id"
         class="pm-toast__item"
         :class="`pm-toast__item--${t.tone}`"
+        data-testid="toast"
         role="alert"
         @click="ui.dismissToast(t.id)"
       >

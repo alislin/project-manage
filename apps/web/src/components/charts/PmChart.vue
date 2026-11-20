@@ -84,7 +84,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="pm-chart">
-    <div v-if="!empty" ref="el" class="pm-chart__canvas" :style="{ height }" />
-    <div v-else class="pm-chart__empty" :style="{ height }" role="status">{{ emptyText }}</div>
+    <div v-if="!empty" ref="el" class="pm-chart__canvas" data-testid="chart-canvas" :style="{ height }" />
+    <div v-else class="pm-chart__empty" data-testid="chart-empty" :style="{ height }" role="status">{{ emptyText }}</div>
   </div>
 </template>

@@ -118,6 +118,7 @@ watch(
         :key="col.key"
         :title="col.title"
         :lanes="col.lanes"
+        :data-testid="`req-column-${col.key}`"
         @move="onMove"
         @open="openCard"
       />

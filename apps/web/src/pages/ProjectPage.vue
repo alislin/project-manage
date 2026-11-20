@@ -65,6 +65,7 @@ watch(
         class="pm-tabs__item"
         :class="{ 'pm-tabs__item--active': isActive(t.key) }"
         :aria-selected="isActive(t.key)"
+        :data-testid="`tab-${t.key}`"
         @click="switchTab(t.key)"
       >
         {{ t.label }}

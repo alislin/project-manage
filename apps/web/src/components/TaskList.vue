@@ -131,14 +131,14 @@ watch(
       <div class="pm-tasklist__group" role="group" aria-label="按状态筛选">
         <span class="pm-tasklist__group-label">状态</span>
         <label v-for="s in TASK_STATUSES" :key="s" class="pm-tasklist__check">
-          <input type="checkbox" :checked="statusSel.includes(s)" @change="toggleStatus(s)" />
+          <input type="checkbox" :data-testid="`filter-status-${s}`" :checked="statusSel.includes(s)" @change="toggleStatus(s)" />
           {{ s }}
         </label>
       </div>
       <div class="pm-tasklist__group" role="group" aria-label="按优先级筛选">
         <span class="pm-tasklist__group-label">优先级</span>
         <label v-for="p in PRIORITIES" :key="p" class="pm-tasklist__check">
-          <input type="checkbox" :checked="prioritySel.includes(p)" @change="togglePriority(p)" />
+          <input type="checkbox" :data-testid="`filter-priority-${p}`" :checked="prioritySel.includes(p)" @change="togglePriority(p)" />
           {{ p }}
         </label>
       </div>
@@ -146,6 +146,7 @@ watch(
         v-if="statusSel.length > 0 || prioritySel.length > 0 || query !== ''"
         class="pm-tasklist__reset"
         type="button"
+        data-testid="filter-reset"
         @click="((statusSel = []), (prioritySel = []), (query = ''))"
       >
         重置筛选
@@ -190,6 +191,7 @@ watch(
             :key="t.id"
             class="pm-tasklist__row"
             :class="{ 'pm-tasklist__row--overdue': isTaskOverdue(t, today) }"
+            :data-testid="`task-row-${t.id}`"
             @click="openTask(t)"
           >
             <td class="pm-tasklist__cell-id">{{ t.id }}</td>

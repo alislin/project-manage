@@ -28,6 +28,7 @@ function onDragEnd(): void {
     class="pm-card pm-req-card"
     :class="{ 'pm-card--dragging': dragging }"
     draggable="true"
+    data-testid="req-card"
     :data-id="props.item.id"
     @dragstart="onDragStart"
     @dragend="onDragEnd"

@@ -34,7 +34,7 @@ onMounted(() => void projects.load());
         </p>
       </div>
 
-      <div v-else class="pm-home__grid">
+      <div v-else class="pm-home__grid" data-testid="project-grid">
         <ProjectCard v-for="p in projects.items" :key="p.slug" :project="p" />
       </div>
     </div>

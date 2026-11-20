@@ -43,6 +43,7 @@ function onDrop(e: DragEvent, status: TaskStatus): void {
       class="pm-column__lane"
       :class="{ 'pm-column__lane--over': overLane === lane.status }"
       :data-status="lane.status"
+      :data-testid="`task-lane-${lane.status}`"
       @dragover="onDragOver($event, lane.status)"
       @dragleave="onDragLeave(lane.status)"
       @drop="onDrop($event, lane.status)"

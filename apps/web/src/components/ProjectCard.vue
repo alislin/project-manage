@@ -23,6 +23,8 @@ function open(): void {
     :class="{ 'pm-project-card--overdue': hasOverdue }"
     role="link"
     tabindex="0"
+    data-testid="project-card"
+    :data-slug="props.project.slug"
     @click="open"
     @keydown.enter="open"
   >

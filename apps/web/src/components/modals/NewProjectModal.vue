@@ -128,7 +128,7 @@ async function submit(): Promise<void> {
 
 <template>
   <div class="pm-modal" @click.self="emit('close')">
-    <div class="pm-modal__dialog pm-npform" role="dialog" aria-modal="true" aria-label="新建项目">
+    <div class="pm-modal__dialog pm-npform" role="dialog" aria-modal="true" aria-label="新建项目" data-testid="new-project-dialog">
       <header class="pm-modal__head">
         <h3 class="pm-modal__title">新建项目</h3>
         <button class="pm-modal__close" type="button" aria-label="关闭" @click="emit('close')">✕</button>
@@ -206,7 +206,7 @@ async function submit(): Promise<void> {
           <button type="button" class="pm-form__btn pm-form__btn--ghost" :disabled="submitting" @click="emit('close')">
             取消
           </button>
-          <button type="submit" class="pm-form__btn pm-form__btn--primary" :disabled="submitting">
+          <button type="submit" class="pm-form__btn pm-form__btn--primary" data-testid="np-submit" :disabled="submitting">
             {{ submitting ? "创建中…" : "创建" }}
           </button>
         </div>

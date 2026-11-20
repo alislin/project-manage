@@ -9,7 +9,7 @@ const ui = useUiStore();
 </script>
 
 <template>
-  <div v-if="ui.conflict" class="pm-modal" @click.self="ui.clearConflict()">
+  <div v-if="ui.conflict" class="pm-modal" data-testid="conflict-dialog" @click.self="ui.clearConflict()">
     <div class="pm-modal__dialog pm-conflict" role="alertdialog" aria-modal="true" aria-label="冲突提示">
       <h3 class="pm-conflict__title">文件已被外部修改</h3>
       <p class="pm-conflict__message">{{ ui.conflict.message }}</p>

@@ -115,6 +115,7 @@ watch(
         :title="col.title"
         :lanes="col.lanes"
         :module-of="(t) => tasks.moduleOf(t)"
+        :data-testid="`task-column-${col.key}`"
         @move="onMove"
         @open="openCard"
       />

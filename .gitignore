@@ -3,3 +3,6 @@ dist
 coverage
 *.log
 .gstack/
+# Playwright E2E 测试产物（trace/截图/报告）
+e2e/.artifacts/
+e2e/playwright-report/

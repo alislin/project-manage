@@ -27,17 +27,18 @@ async function onCreated(slug: string): Promise<void> {
 
 <template>
   <header class="pm-header">
-    <a class="pm-header__brand" href="/" @click.prevent="goHome">PM 台账</a>
+    <a class="pm-header__brand" href="/" data-testid="nav-brand" @click.prevent="goHome">PM 台账</a>
     <div class="pm-header__actions">
       <button
         class="pm-header__btn"
         type="button"
+        data-testid="nav-theme-toggle"
         :title="ui.isDark ? '切换到亮色主题' : '切换到暗色主题'"
         @click="ui.toggleTheme()"
       >
         {{ ui.isDark ? "☀ 亮色" : "☾ 暗色" }}
       </button>
-      <button class="pm-header__btn pm-header__btn--accent" type="button" @click="showNewProject = true">
+      <button class="pm-header__btn pm-header__btn--accent" type="button" data-testid="nav-new-project" @click="showNewProject = true">
         新建项目
       </button>
     </div>
