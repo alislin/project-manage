@@ -515,7 +515,7 @@ export function reindexFile(index: VaultIndex, absPath: string): void {
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { registerSelfWrite } from "./selfWrite";
+import { isSelfWrite, registerSelfWrite } from "./selfWrite";
 
 let counter = 0;
 
@@ -542,28 +542,38 @@ export function atomicWriteFile(absPath: string, content: string, opts: WriteOpt
     }
   }
 
-  // 2) 写临时文件（同目录，确保 rename 同文件系统）
+  // 2) 写临时文件（同目录，确保 rename 同文件系统）；try/finally 保证失败路径清理残留临时文件
   const tmpName = `.${name}.tmp-${process.pid}-${Date.now().toString(36)}-${(counter++).toString(36)}`;
   const tmpPath = path.join(dir, tmpName);
-  fs.writeFileSync(tmpPath, content, "utf8");
-  fs.renameSync(tmpPath, absPath);
+  let renamed = false;
+  try {
+    fs.writeFileSync(tmpPath, content, "utf8");
 
-  // 3) 写后再次复查 mtime（收窄 race 窗）
-  if (opts.expectedMtimeMs !== undefined) {
-    const cur = fs.statSync(absPath).mtimeMs;
-    if (Math.abs(cur - opts.expectedMtimeMs) > 1) {
-      return { ok: false, error: { code: "E_CONFLICT", message: "写入后检测到文件仍有并发修改", file: absPath, httpStatus: 409 } };
+    // 3) rename 前 mtime 复查（收窄 race 窗；过滤自写，检测到并发修改即中止覆盖，保留外部变更）
+    if (opts.expectedMtimeMs !== undefined && fs.existsSync(absPath)) {
+      const cur = fs.statSync(absPath).mtimeMs;
+      if (Math.abs(cur - opts.expectedMtimeMs) > 1 && !isSelfWrite(absPath, cur)) {
+        return { ok: false, error: { code: "E_CONFLICT", message: "rename 前复查检测到并发修改，已中止写入", file: absPath, httpStatus: 409 } };
+      }
+    }
+
+    // 4) rename
+    fs.renameSync(tmpPath, absPath);
+    renamed = true;
+  } finally {
+    if (!renamed) {
+      try { fs.unlinkSync(tmpPath); } catch { /* tmp 不存在：忽略 */ }
     }
   }
 
-  // 4) 登记自写（§5.3）
+  // 5) rename 成功后登记自写（§5.3；登记晚于复查，避免 isSelfWrite 恒真使复查分支永不触发）
   registerSelfWrite(absPath, fs.statSync(absPath).mtimeMs);
 
   const entry: FileEntry = {
     absPath,
     relPath: toPosix(path.relative(config.pmRoot, absPath)),
     mtimeMs: fs.statSync(absPath).mtimeMs,
-    size: content.length,
+    size: Buffer.byteLength(content, "utf8"), // 字节数而非 UTF-16 码元数
   };
   return { ok: true, path: absPath, written: entry };
 }

@@ -198,6 +198,7 @@ $ pm move TASK-proj-003 --status done
 - `4`：`E_INVALID_TRANSITION`（含拒绝原因，如 "doing → todo 不可逆回退，拒绝流转"；`01-数据规范 §3.4` 非法流转清单）。
 - `1`：`E_NOT_FOUND`（id 不存在）。
 - `2`：`E_USAGE`（缺 `--status`）。
+- `3`：`E_CONFLICT`（文件被外部修改，mtime 冲突；HTTP 409，刷新后重试）。
 
 > 错误 JSON（stderr）：`{ ok: false, code: "E_INVALID_TRANSITION", message, file, field: "status", issues: [{file, field, code, message}] }`。
 
@@ -312,7 +313,7 @@ $ pm move TASK-proj-003 --status done
 
 - `0`：无问题。
 - `2`：发现问题（issues 非空；警告级，以 exit=2 让脚本/CI 能发现）。
-- `1`：`E_CONFIG_INVALID`（无法加载配置）。
+- `2`：`E_CONFIG_INVALID`（无法加载配置）。
 
 ---
 

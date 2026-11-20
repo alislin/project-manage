@@ -9,7 +9,7 @@ export interface StatsArgs {
 /**
  * `pm stats`（03-cli §5）：聚合统计，`--json` 输出 ≡ 02-core §2.4 Stats
  * （projects[].progress 含 onTrack；totals.tasks.onTrack，03-cli §5.2）。
- * 退出码：0 成功；1 E_CONFIG_INVALID/E_IO（03-cli §5.4）。
+ * 退出码：0 成功；1 E_IO；2 E_CONFIG_INVALID（03-cli §5.4）。
  */
 export async function runStats(args: StatsArgs): Promise<number> {
   const json = !!args.json;
