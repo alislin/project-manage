@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import matter from "gray-matter";
-import { E_CONFLICT, E_INVALID_TRANSITION, E_NOT_FOUND } from "../errors.js";
+import { E_INVALID_TRANSITION, E_NOT_FOUND } from "../errors.js";
 import { reindexFile } from "../indexer.js";
 import { atomicWriteFile } from "../writer.js";
 import { ok, err, today, type AppResult, type FileEntry, type MoveOutcome, type VaultIndex } from "../types.js";
@@ -20,7 +20,15 @@ const LEGAL_TRANSITIONS: ReadonlySet<string> = new Set([
   "todo->doing", "todo->done", "todo->cancelled", "doing->done", "doing->cancelled", "cancelled->todo",
 ]);
 
-/** design §4.7.1：moveLocks：Map<FileEntry.relPath, Promise<void>>（同步实现内天然串行） */
+/**
+ * design §4.7.1：moveLocks：Map<FileEntry.relPath, Promise<void>> —— 按路径 promise 链队列。
+ * 每次 moveStatus 把本次流转的完成门闩接在链尾（`prev.then(() => gate)`），链尾 promise
+ * 在「此前排队的流转 + 本次流转」全部完成后 resolve：
+ * - 异步场景安全：未来 moveStatus async 化时先 `await moveLocks.get(relPath)` 再执行；
+ *   05-server §6.2 外部写锁同样以 await 链尾挂接本链，实现与内部流转的互斥串行；
+ * - 与同步执行语义构成双保险：当前 moveStatus 为同步实现，JS 单线程下步骤 1–4 天然不交叠；
+ *   promise 链负责覆盖异步场景，两者共同保证同路径流转严格串行（02-core §4.7.1）。
+ */
 export const moveLocks = new Map<string, Promise<void>>();
 
 /** 校验流转合法性（design §4.7, 01-数据规范 §3.1–3.3 表） */
@@ -57,10 +65,13 @@ export function moveStatus(index: VaultIndex, id: string, next: string): AppResu
   const target = findMoveTarget(index, id);
   if (!target) return err({ code: E_NOT_FOUND, message: `记录 ${id} 不存在（02-core §4.7）` });
   const relPath = target.file.relPath;
-  if (moveLocks.has(relPath)) {
-    return err({ code: E_CONFLICT, message: `路径 ${relPath} 正在处理并发流转，请刷新重试`, file: target.file.absPath, httpStatus: 409 });
-  }
-  moveLocks.set(relPath, Promise.resolve());
+
+  // 按路径 promise 链队列（design §4.7.1）：本次流转接在链尾，完成后 resolve 门闩放行异步等待者
+  const prev = moveLocks.get(relPath) ?? Promise.resolve();
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => (release = resolve));
+  moveLocks.set(relPath, prev.then(() => gate));
+
   try {
     const from = target.record.status;
     if (!isValidTransition(from, next, index)) {
@@ -97,6 +108,6 @@ export function moveStatus(index: VaultIndex, id: string, next: string): AppResu
       newStatuses: [{ id, status: next }],
     });
   } finally {
-    moveLocks.delete(relPath);
+    release(); // 解开门闩：链上等待者（异步侧 / 外部写锁）按序放行；链尾保留供后续流转挂接
   }
 }

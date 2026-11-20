@@ -272,14 +272,15 @@ describe("TC-02 integration: writer", () => {
     const w1 = atomicWriteFile(abs, "worker-1", { expectedMtimeMs: m0, pmRoot });
     expect(w1.ok).toBe(true);
     // 同一 mtime 粒度下第二个 worker 的复查需要确定性差异：人为 bump mtime 模拟并发窗口
+    // （兜底阈值与 writer 的 MTIME_EPSILON_MS=1 对齐，避免落在 epsilon 内的时钟粒度抖动漏检）
     let m1 = fs.statSync(abs).mtimeMs;
-    if (m1 === m0) {
+    if (Math.abs(m1 - m0) <= 1) {
       const d = new Date();
       d.setTime(d.getTime() + 5000);
       fs.utimesSync(abs, d, d);
       m1 = fs.statSync(abs).mtimeMs;
     }
-    expect(m1).not.toBe(m0);
+    expect(Math.abs(m1 - m0)).toBeGreaterThan(1);
     const w2 = atomicWriteFile(abs, "worker-2", { expectedMtimeMs: m0, pmRoot });
     expect(w2.ok).toBe(false);
     if (!w2.ok) expect(w2.error.code).toBe("E_CONFLICT");
@@ -339,13 +340,15 @@ describe("TC-02 integration: moveStatus", () => {
     // 外部追加修改文件（非应用写）
     fs.appendFileSync(abs, "\n<!-- 外部修改 -->\n");
     let m1 = fs.statSync(abs).mtimeMs;
-    if (m1 === m0) {
+    // 兜底阈值与 writer 的 MTIME_EPSILON_MS=1 对齐：外部修改若落在扫描后 1ms 内，
+    // 预检会因 epsilon 放行，必须人为 bump mtime 保证冲突确定性
+    if (Math.abs(m1 - m0) <= 1) {
       const d = new Date();
       d.setTime(d.getTime() + 1000);
       fs.utimesSync(abs, d, d);
       m1 = fs.statSync(abs).mtimeMs;
     }
-    expect(m1).not.toBe(m0);
+    expect(Math.abs(m1 - m0)).toBeGreaterThan(1);
     const res = moveStatus(index, "TASK-proj-001", "doing");
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error.code).toBe("E_CONFLICT");

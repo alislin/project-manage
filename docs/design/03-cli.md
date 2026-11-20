@@ -135,6 +135,7 @@
 - `2`：`E_USAGE`（缺 `--slug`/`--title`/`--requirement`）、`E_CONFIG_INVALID`。
 - `4`：`E_VALIDATION`（字段校验失败，如空 title）。
 - `1`：`E_NOT_FOUND`（项目目录不存在 / requirement 不存在）。
+- `3`：`E_CONFLICT`（重名项目：规范化 slug 已存在；HTTP 409，语义与 `05-server §2.2` "slug 已存在" 一致）。
 - `5`：`E_SEQ_EXHAUSTED`（三位序号耗尽，`01-数据规范 §1.5`）。
 
 ### 3.5 人类可读示例
@@ -254,7 +255,8 @@ $ pm move TASK-proj-003 --status done
 ### 5.4 退出码
 
 - `0`：成功。
-- `1`：`E_CONFIG_INVALID`（无法加载配置）、`E_IO`（扫描失败）。
+- `1`：`E_IO`（扫描失败）。
+- `2`：`E_CONFIG_INVALID`（无法加载配置）。
 
 ---
 

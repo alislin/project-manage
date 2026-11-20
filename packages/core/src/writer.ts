@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { E_CONFLICT } from "./errors.js";
+import { E_CONFLICT, E_IO } from "./errors.js";
 import { normalizePath, type AppError, type FileEntry, type WriteConflict } from "./types.js";
 
 /**
@@ -11,6 +11,11 @@ import { normalizePath, type AppError, type FileEntry, type WriteConflict } from
 export interface WriteOpts {
   expectedMtimeMs?: number;
   pmRoot?: string;
+  /**
+   * @internal 仅供测试注入：在「预检与 rename 之间」的窗口内模拟外部写入，
+   * 用于覆盖 rename 前 mtime 复查分支（review-m1 round1 major#1）。生产代码不得传入。
+   */
+  _injectExternalWrite?: () => void;
 }
 
 export type WriteResult =
@@ -54,8 +59,10 @@ const MTIME_EPSILON_MS = 1;
  * 原子写：临时文件（同目录，确保 rename 同文件系统）+ writeFileSync + fs.renameSync（design §6.1）。
  * - 写前 mtime 冲突检测：expectedMtimeMs 非空且当前 stat.mtimeMs 不匹配 → 返回 { ok:false, E_CONFLICT }
  *   （expectedMtimeMs/currentMtimeMs 写入 error，design §3.3 示例）。
- * - 写后再次复查（收窄 race 窗；再次 stat + selfWrite 过滤自写，design §6.1 注）。
- * - 写后：writer 向 writer/self-ignore 注册（design §5.3）。
+ * - rename 前 mtime 复查（收窄 race 窗，02-core §4.6 "rename 前再次 stat 与 expected 比对"）：
+ *   检测到并发修改时中止覆盖（外部变更得以保留）；复查先于 registerSelfWrite，
+ *   避免登记后 isSelfWrite 恒真导致复查分支永不触发（review-m1 round1 major#1）。
+ * - rename 成功后：writer 向 writer/self-ignore 注册（design §5.3）。
  */
 export function atomicWriteFile(absPath: string, content: string, opts: WriteOpts = {}): WriteResult {
   const dir = path.dirname(absPath);
@@ -85,36 +92,78 @@ export function atomicWriteFile(absPath: string, content: string, opts: WriteOpt
     return { ok: false, error };
   }
 
-  // 2) 写临时文件（同目录，确保 rename 同文件系统）+ rename（design §6.1）
+  // 2) 写临时文件（同目录，确保 rename 同文件系统）+ rename（design §6.1）；
+  //    try/finally 保证失败路径清理残留临时文件（review-m1 round1 minor）
   const tmpName = `.${name}.tmp-${process.pid}-${Date.now().toString(36)}-${(counter++).toString(36)}`;
   const tmpPath = path.join(dir, tmpName);
-  fs.writeFileSync(tmpPath, content, "utf8");
-  fs.renameSync(tmpPath, absPath);
+  let renamed = false;
+  try {
+    fs.writeFileSync(tmpPath, content, "utf8");
 
-  // 3) 写后登记自写 + 复查（收窄 race 窗）
+    // 测试注入点：模拟外部写入落在「预检与 rename 之间」的窗口（review-m1 round1 major#1）
+    opts._injectExternalWrite?.();
+
+    // 3) rename 前 mtime 复查（收窄 race 窗；再次 stat + selfWrite 过滤自写，design §6.1 注）。
+    //    仅当预检时文件已存在才复查（新建文件场景无需复查）。
+    if (opts.expectedMtimeMs !== undefined && currentMtimeMs !== undefined) {
+      let deletedInWindow = false;
+      let recheckMtimeMs = 0;
+      try {
+        recheckMtimeMs = fs.statSync(absPath).mtimeMs;
+      } catch {
+        deletedInWindow = true; // 预检时存在、rename 前消失 → 外部并发删除
+      }
+      if (
+        deletedInWindow ||
+        (Math.abs(recheckMtimeMs - opts.expectedMtimeMs) > MTIME_EPSILON_MS &&
+          !isSelfWrite(absPath, recheckMtimeMs))
+      ) {
+        const error: AppError & WriteConflict = {
+          code: E_CONFLICT as "E_CONFLICT",
+          message: "rename 前复查检测到文件并发修改，已中止写入，请刷新后重试",
+          file: absPath,
+          path: absPath,
+          expectedMtimeMs: opts.expectedMtimeMs,
+          ...(deletedInWindow ? {} : { currentMtimeMs: recheckMtimeMs }),
+          httpStatus: 409,
+        };
+        return { ok: false, error };
+      }
+    }
+
+    // 4) rename（design §6.1）；异常映射为 E_IO 结构化错误而非裸抛（review-m1 round1 minor）
+    try {
+      fs.renameSync(tmpPath, absPath);
+      renamed = true;
+    } catch (e) {
+      const error: AppError = {
+        code: E_IO,
+        message: `重命名临时文件失败: ${e instanceof Error ? e.message : String(e)}`,
+        file: absPath,
+        httpStatus: 500,
+      };
+      return { ok: false, error };
+    }
+  } finally {
+    // 未完成 rename 时清理残留临时文件（写入失败/复查冲突/rename 失败路径；rename 成功后 tmp 已不存在）
+    if (!renamed) {
+      try {
+        fs.unlinkSync(tmpPath);
+      } catch {
+        /* tmp 不存在：忽略 */
+      }
+    }
+  }
+
+  // 5) rename 成功后登记自写（design §5.3；登记晚于复查，避免过滤掉真实冲突）
   const afterMtimeMs = fs.statSync(absPath).mtimeMs;
   registerSelfWrite(absPath, afterMtimeMs);
-  if (
-    opts.expectedMtimeMs !== undefined &&
-    Math.abs(afterMtimeMs - opts.expectedMtimeMs) > MTIME_EPSILON_MS &&
-    !isSelfWrite(absPath, afterMtimeMs)
-  ) {
-    const error: AppError & WriteConflict = {
-      code: E_CONFLICT as "E_CONFLICT",
-      message: "写入后检测到文件仍有并发修改",
-      file: absPath,
-      path: absPath,
-      expectedMtimeMs: opts.expectedMtimeMs,
-      httpStatus: 409,
-    };
-    return { ok: false, error };
-  }
 
   const entry: FileEntry = {
     absPath,
     relPath: normalizePath(path.relative(opts.pmRoot ?? process.cwd(), absPath)),
     mtimeMs: afterMtimeMs,
-    size: content.length,
+    size: Buffer.byteLength(content, "utf8"), // 字节数而非 UTF-16 码元数（review-m1 round1 minor）
   };
   return { ok: true, path: absPath, written: entry };
 }
