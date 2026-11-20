@@ -57,3 +57,28 @@
     background: var(--pm-text-tertiary);
   }
 }
+
+// 优先级圆点（06-web §2.2 PriorityDot / §9.2：P0 红 P1 橙 P2 琥珀 P3 琥珀-深）
+.pm-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+
+  &--p0 {
+    background: #ef4444;
+  }
+
+  &--p1 {
+    background: #f97316;
+  }
+
+  &--p2 {
+    background: #f59e0b;
+  }
+
+  &--p3 {
+    background: #a16207;
+  }
+}

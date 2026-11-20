@@ -1,0 +1,219 @@
+// 任务列表视图（06-web §2.2 TaskList / §11：表格 + 筛选 + 排序 + 逾期标红 + 行内快捷流转）
+.pm-tasklist {
+  min-width: 0;
+
+  &__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 14px;
+    margin-bottom: 12px;
+    background: var(--pm-bg-secondary);
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-radius);
+    font-size: 13px;
+    color: var(--pm-text-secondary);
+  }
+
+  &__search {
+    flex: 1;
+    min-width: 180px;
+    max-width: 280px;
+    padding: 5px 10px;
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-radius-sm);
+    background: var(--pm-bg-primary);
+    color: var(--pm-text-primary);
+    font-size: 13px;
+  }
+
+  &__group {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &__group-label {
+    color: var(--pm-text-tertiary);
+    margin-right: 2px;
+  }
+
+  &__check {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border: 1px solid var(--pm-border);
+    border-radius: 999px;
+    background: var(--pm-bg-primary);
+    cursor: pointer;
+    user-select: none;
+
+    input {
+      accent-color: var(--pm-accent);
+    }
+  }
+
+  &__reset {
+    appearance: none;
+    border: 1px solid var(--pm-border);
+    background: transparent;
+    color: var(--pm-text-secondary);
+    border-radius: var(--pm-radius);
+    padding: 4px 12px;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--pm-accent);
+      border-color: var(--pm-accent);
+    }
+  }
+
+  &__tablewrap {
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-radius-lg);
+    background: var(--pm-bg-primary);
+    overflow-x: auto;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    th {
+      text-align: left;
+      padding: 9px 12px;
+      background: var(--pm-bg-tertiary);
+      color: var(--pm-text-secondary);
+      font-weight: 600;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    td {
+      padding: 9px 12px;
+      border-top: 1px solid var(--pm-border);
+      color: var(--pm-text-primary);
+      vertical-align: middle;
+    }
+  }
+
+  &__sort {
+    appearance: none;
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 600;
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+
+    &:hover {
+      color: var(--pm-accent);
+    }
+  }
+
+  &__sort-ind {
+    font-size: 10px;
+    color: var(--pm-accent);
+  }
+
+  // 逾期行：浅红底 + due 标红（TC-06-011，--pm-status-overdue）
+  &__row {
+    cursor: pointer;
+    transition: background-color var(--pm-duration) var(--pm-easing);
+
+    &:hover {
+      background: var(--pm-bg-secondary);
+    }
+
+    &--overdue {
+      background: rgba(239, 68, 68, 0.05);
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.09);
+      }
+
+      .pm-date--overdue {
+        font-weight: 700;
+      }
+    }
+  }
+
+  &__cell-id {
+    color: var(--pm-text-tertiary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  &__cell-title {
+    max-width: 260px;
+  }
+
+  &__title {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  &__link {
+    appearance: none;
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--pm-accent);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &__dangling {
+    color: var(--pm-text-tertiary);
+    font-size: 12px;
+  }
+
+  &__ops {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  // 行内快捷流转按钮（合法流转目标，01-数据规范 §3.3）
+  &__op {
+    appearance: none;
+    padding: 3px 10px;
+    border: 1px solid var(--pm-border);
+    border-radius: 999px;
+    background: var(--pm-bg-primary);
+    color: var(--pm-text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: color var(--pm-duration) var(--pm-easing), border-color var(--pm-duration) var(--pm-easing);
+
+    &:hover:not(:disabled) {
+      color: var(--pm-accent);
+      border-color: var(--pm-accent);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}

@@ -4,7 +4,17 @@
  * - 失败（网络/HTTP/信封 error）抛 `ApiError`，并触发全局错误回调（供 ErrorToast 提示）；
  * - 调用方只需 `await api.listProjects()` 即可获得 `data` 载荷。
  */
-import type { ApiErrorBody, Envelope, ProjectsData } from "./types";
+import type {
+  ApiErrorBody,
+  Envelope,
+  PatchStatusBody,
+  PatchStatusData,
+  ProjectsData,
+  RequirementDetailData,
+  RequirementsData,
+  TaskDetailData,
+  TasksData,
+} from "./types";
 
 /** 客户端补充的错误码（非服务端 02-core §3.1 错误码） */
 export const E_NETWORK = "E_NETWORK";
@@ -40,7 +50,13 @@ function fail(err: ApiError): never {
 }
 
 /** 统一请求：返回信封 data；失败抛 ApiError（先触发全局钩子再抛出） */
-export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiRequest<T>(path: string, init?: RequestInit, opts?: { silent?: boolean }): Promise<T> {
+  /** `silent=true` 不触发全局 Toast（如拖拽流转，由 store 自行决定提示与回滚，06-web §3.1） */
+  function fail(err: ApiError): never {
+    if (!opts?.silent) onErrorHook?.(err);
+    throw err;
+  }
+
   let res: Response;
   try {
     res = await fetch(path, init);
@@ -65,8 +81,35 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   return (envelope.data ?? {}) as T;
 }
 
-/** 常用端点封装（05-server §2-§4；本阶段仅消费项目列表） */
+/** JSON 请求体 init（PATCH 状态流转等写操作） */
+function jsonInit(method: string, body: unknown): RequestInit {
+  return { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body) };
+}
+
+/** 常用端点封装（05-server §2-§4） */
 export const api = {
   /** 05-server §2.1 GET /api/projects */
   listProjects: () => apiRequest<ProjectsData>("/api/projects"),
+
+  /** 05-server §2.4 GET /api/projects/:slug/requirements */
+  listRequirements: (slug: string) =>
+    apiRequest<RequirementsData>(`/api/projects/${encodeURIComponent(slug)}/requirements`),
+
+  /** 05-server §2.6 GET /api/requirements/:id（详情 + relatedTasks 反链） */
+  getRequirement: (id: string) =>
+    apiRequest<RequirementDetailData>(`/api/requirements/${encodeURIComponent(id)}`),
+
+  /** 05-server §2.7 PATCH /api/requirements/:id（拖拽/手动流转；silent → store 接管提示与回滚） */
+  patchRequirement: (id: string, body: PatchStatusBody) =>
+    apiRequest<PatchStatusData>(`/api/requirements/${encodeURIComponent(id)}`, jsonInit("PATCH", body), { silent: true }),
+
+  /** 05-server §3.1 GET /api/projects/:slug/tasks */
+  listTasks: (slug: string) => apiRequest<TasksData>(`/api/projects/${encodeURIComponent(slug)}/tasks`),
+
+  /** 05-server §3.4 GET /api/tasks/:id（详情 + relatedRequirement 反向查询） */
+  getTask: (id: string) => apiRequest<TaskDetailData>(`/api/tasks/${encodeURIComponent(id)}`),
+
+  /** 05-server §3.3 PATCH /api/tasks/:id（同 §2.7 同构） */
+  patchTask: (id: string, body: PatchStatusBody) =>
+    apiRequest<PatchStatusData>(`/api/tasks/${encodeURIComponent(id)}`, jsonInit("PATCH", body), { silent: true }),
 };

@@ -1,43 +1,17 @@
 /**
  * 路由表（06-web §1 / plan §6）：
  * - `/` 多项目总览卡片墙（HomePage）；
- * - `/p/:slug` 项目工作台（ProjectPage）：需求池 / 任务看板 / 任务列表 / 进度总览 四个 Tab 子路由，
- *   本阶段 Tab 页为结构占位，路由与布局完整；
+ * - `/p/:slug` 项目工作台（ProjectPage）：需求池 / 任务看板 / 任务列表（S7 实施）+ 进度总览（占位）；
  * - 单用户模式：无登录/路由守卫（06-web §1 约定）。
  */
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 import HomePage from "../pages/HomePage.vue";
 import ProjectPage from "../pages/ProjectPage.vue";
+import RequirementsPage from "../pages/RequirementsPage.vue";
+import TaskListPage from "../pages/TaskListPage.vue";
+import TasksBoardPage from "../pages/TasksBoardPage.vue";
 import TabPlaceholder from "../components/TabPlaceholder.vue";
 import { useUiStore, type ProjectTab } from "../stores/ui";
-
-/** 四个 Tab 子路由（名称与 06-web §1 Tab 顺序一致） */
-const tabRoutes: Array<{ path: string; tab: ProjectTab; title: string; description: string }> = [
-  {
-    path: "requirements",
-    tab: "requirements",
-    title: "需求池",
-    description: "四栏看板（Pool / Reviewing / Accepted / Done+Rejected）与拖拽流转将在 S7 实施。",
-  },
-  {
-    path: "tasks-board",
-    tab: "tasks-board",
-    title: "任务看板",
-    description: "任务四栏看板（todo / doing / done / cancelled）与逾期标红将在 S7 实施。",
-  },
-  {
-    path: "tasks-list",
-    tab: "tasks-list",
-    title: "任务列表",
-    description: "状态/优先级筛选、搜索与排序的表格视图将在 S7 实施。",
-  },
-  {
-    path: "overview",
-    tab: "overview",
-    title: "进度总览",
-    description: "需求交付漏斗、任务趋势与状态分布图表将在 S7 实施。",
-  },
-];
 
 const routes: RouteRecordRaw[] = [
   { path: "/", name: "home", component: HomePage },
@@ -47,12 +21,20 @@ const routes: RouteRecordRaw[] = [
     children: [
       // /p/:slug → 默认重定向到需求池 Tab
       { path: "", redirect: { name: "project-requirements" } },
-      ...tabRoutes.map<RouteRecordRaw>((t) => ({
-        path: t.path,
-        name: `project-${t.tab}`,
+      { path: "requirements", name: "project-requirements", component: RequirementsPage },
+      { path: "tasks-board", name: "project-tasks-board", component: TasksBoardPage },
+      { path: "tasks-list", name: "project-tasks-list", component: TaskListPage },
+      {
+        // 进度总览（ECharts 三图）非 S7 范围，保持结构占位
+        path: "overview",
+        name: "project-overview",
         component: TabPlaceholder,
-        props: { tab: t.tab, title: t.title, description: t.description },
-      })),
+        props: {
+          tab: "overview",
+          title: "进度总览",
+          description: "需求交付漏斗、任务趋势与状态分布图表将在后续阶段实施。",
+        },
+      },
     ],
   },
   // 兜底：未知路径回总览

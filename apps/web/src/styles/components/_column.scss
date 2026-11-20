@@ -1,4 +1,85 @@
-// 看板列（预留：S7 需求池/任务看板四列布局时启用，06-web §6.1）
+// 看板列（06-web §6.1/§8：四栏布局；第 4 列 Done+Rejected 双泳道各自落卡）
 .pm-column {
-  display: none;
+  background: var(--pm-bg-tertiary);
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius-lg);
+  padding: 10px;
+  min-height: 240px;
+  min-width: 0;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 2px 4px 10px;
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--pm-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__count,
+  &__lane-count {
+    display: inline-flex;
+    align-items: center;
+    min-width: 22px;
+    justify-content: center;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--pm-bg-secondary);
+    border: 1px solid var(--pm-border);
+    font-size: 12px;
+    color: var(--pm-text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // 泳道（drop 区）：拖拽悬停高亮（06-web §6 步骤 1 showDropZone）
+  &__lane {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 6px;
+    border-radius: var(--pm-radius);
+    border: 1px dashed transparent;
+    transition: background-color var(--pm-duration) var(--pm-easing), border-color var(--pm-duration) var(--pm-easing);
+
+    & + & {
+      margin-top: 8px;
+    }
+
+    &--over {
+      background: rgba(59, 130, 246, 0.08);
+      border-color: var(--pm-accent);
+    }
+  }
+
+  &__lane-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--pm-text-tertiary);
+  }
+
+  &__lane-label {
+    font-weight: 600;
+    color: var(--pm-text-secondary);
+  }
+
+  &__empty {
+    margin: 0;
+    padding: 14px 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--pm-text-tertiary);
+  }
 }

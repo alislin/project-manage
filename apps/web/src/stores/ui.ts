@@ -22,6 +22,18 @@ export interface ToastItem {
   tone: "error" | "info";
 }
 
+/**
+ * 409 冲突弹窗信息（06-web §3.2 / Q-05 定案："刷新并重试一次"）。
+ * moveStatus 自动刷新重试仍失败时置入；ConflictDialog 消费，"刷新并重试/取消"由看板页处理。
+ */
+export interface ConflictInfo {
+  entity: "requirement" | "task";
+  id: string;
+  /** 冲突时正在流转到的目标状态 */
+  to: string;
+  message: string;
+}
+
 export const useUiStore = defineStore("ui", () => {
   // --- 主题 ---
   const theme = ref<Theme>("light");
@@ -66,6 +78,17 @@ export const useUiStore = defineStore("ui", () => {
     toasts.value = toasts.value.filter((t) => t.id !== id);
   }
 
+  // --- 409 冲突弹窗（06-web §3.2，Q-05：自动重试一次仍冲突后弹出） ---
+  const conflict = ref<ConflictInfo | null>(null);
+
+  function showConflict(info: ConflictInfo): void {
+    conflict.value = info;
+  }
+
+  function clearConflict(): void {
+    conflict.value = null;
+  }
+
   return {
     theme,
     isDark,
@@ -76,5 +99,8 @@ export const useUiStore = defineStore("ui", () => {
     toasts,
     pushToast,
     dismissToast,
+    conflict,
+    showConflict,
+    clearConflict,
   };
 });

@@ -13,6 +13,7 @@
 @use "./layout/main";
 @use "./layout/footer";
 @use "./components/badge";
+@use "./components/board";
 @use "./components/card";
 @use "./components/column";
 @use "./components/modal";
@@ -21,6 +22,7 @@
 @use "./components/form";
 @use "./components/progress-ring";
 @use "./components/tabs";
+@use "./components/tasklist";
 @use "./components/echarts";
 @use "./pages/home";
 @use "./pages/project";
