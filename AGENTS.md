@@ -30,14 +30,18 @@ PM/
 | 任务 | 命令（CLI/MCP） |
 |---|---|
 | 新建项目 | `pm new project --name "我的应用 v2"` / `pm_create({type:"project",...})` |
-| 新建需求 | `pm new requirement --slug <slug> --title "..." --module --source` |
-| 新建任务 | `pm new task --slug <slug> --requirement [[REQ-...]] --title --priority --due` |
+| 新建需求 | `pm new requirement --slug <slug> --title "..." --module --source` / `pm_create({type:"requirement",...})` |
+| 新建任务 | `pm new task --slug <slug> --requirement REQ-<slug>-NNN --title --priority --due`（CLI 传裸 id，入库自动转 wiki-link）/ `pm_create({type:"task",...})`（requirement 兼容 `[[REQ-...]]`） |
+| 整理收集箱 | `pm inbox list` / `pm inbox process [--limit <n>] [--all] [--dry-run]` / `pm inbox archive <INBOX-id>`（`03-cli §7`；MCP `pm_inbox_list/process/archive` 同源） |
 | 提交整理完成 | `pm move REQ-<slug>-001 --status reviewing` |
 | 接受→交付 | `pm move REQ-<slug>-001 --status accepted` → `--status done` |
 | 开始任务/完成任务 | `pm move TASK-<slug>-002 --status doing/done`（done 自动写 completed） |
-| 巡检（台账） | `pm validate [--json]` + `pm check`（`03-cli §2/§6`） |
-| 统计速览 | `pm stats --json`（`03-cli §5`） |
+| 巡检（台账） | `pm validate [--json]` + `pm check [--json]`（`03-cli §2/§6`；check 编号冲突扫描含 inbox 条目 id） |
+| 统计速览 | `pm stats --json`（`03-cli §5`；含 `onTrack`：`projects[].progress.onTrack` 与 `totals.tasks.onTrack`） |
+| 启动 Web 服务 | `pm serve [-p 端口] [-H 主机]`（`03-cli §8`：REST + SSE + 静态托管 `apps/web/dist`） |
 | 需求派生任务 | `POST /api/requirements/:id/derive-task`（`05-server §2.8`） |
+
+> `--root <path>`：全局与子命令级均可指定工程根（`pm.config.json` 所在目录，缺省 = cwd 及祖先链解析，`03-cli §1.1`）；MCP server 同语义：`node packages/mcp/dist/main.js --root <工程根>`（opencode 挂载示例见仓库 README）。
 
 ## 错误速查（`02-core §3.1`，退出码 `03-cli §1.3`）
 
@@ -48,11 +52,13 @@ PM/
 | `E_VALIDATION` | frontmatter 非法（字段不合法） | `pm validate --json` 精确定位 file+field，修后重跑 |
 | `E_CONFLICT` | 有人改了文件（mtime 冲突） | 刷新（Web/CLI 重请） |
 | `E_SEQ_EXHAUSTED` | 三位编号耗尽（>999） | 先归档/删除低优任务后重试 |
+| `E_USAGE` | 入参非法（缺必填/取值越界，MCP inputSchema 校验） | 按报错 `field`/`message` 修正入参后重试 |
 
 ## 常见场景指引
 
 - "我想把某个需求完成了" → `pm move REQ-... --status done`。
-- "生成一周工作报告" → `pm stats --json` + `PM/WORKFLOW.md` §3.3 模板。
+- "有新的想法碎片要进台账" → `pm inbox list --json` → `pm new requirement ... --source "inbox:<file>"` → `pm inbox archive <INBOX-id>`（`07-workflow §2.1`）。
+- "生成一周工作报告" → `pm stats --json` + `PM/WORKFLOW.md` 周报模板（"模板：WeekYYmmDD"节）。
 - "台账里编号冲突" → `pm check --json` → `01-数据规范 §6.2` 悬空链接/编号规则，改路径或重命名。
 
 > 完整执行流程见本目录 `PM/WORKFLOW.md` 的 SOP（`07-workflow §2`）。
