@@ -153,11 +153,11 @@ export async function teardownServer(built: BuiltServer): Promise<void> {
   await sleep(120);
 }
 
-/** 等待磁盘 mtime 偏离 prev（>1ms，与 writer epsilon 一致），返回新 mtime */
+/** 等待磁盘 mtime 偏离 prev（>1ms，与 writer epsilon 一致），返回新 mtime（S5R1 OBS-4：整数毫秒，与 API 载荷同口径） */
 export async function waitMtimeChange(absPath: string, prev: number): Promise<number> {
   for (let i = 0; i < 300; i++) {
     try {
-      const m = fs.statSync(absPath).mtimeMs;
+      const m = Math.round(fs.statSync(absPath).mtimeMs);
       if (Math.abs(m - prev) > 1) return m;
     } catch {
       return Number.NaN; // 文件被删除

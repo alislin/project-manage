@@ -157,4 +157,34 @@ describe("TC-03 new", () => {
     const code = await runNewTask({ slug: "proj", requirement: "REQ-proj-999", title: "t", due: "2026-11-30", root });
     expect(code).toBe(4);
   });
+
+  it("S5R1 ISSUE-3 全链路: 连字符 slug smoke-demo 项目→需求→任务走通（exit 0）", async () => {
+    const v = newRoot();
+    // 播种连字符 slug 项目与需求（编号含连字符段，修复前 pm new task 一律拒绝）
+    writePmFile(v, "projects/smoke-demo/project.md", PROJECT_MD.replace("id: proj", "id: smoke-demo"));
+    writePmFile(
+      v,
+      "projects/smoke-demo/requirements/REQ-smoke-demo-001.md",
+      REQ_001_MD.replace(/REQ-proj-001/g, "REQ-smoke-demo-001"),
+    );
+    // 1) 需求可创建（allocateId 扫描连字符编号）
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const codeReq = await runNewRequirement({ slug: "smoke-demo", title: "连字符需求二", root });
+    expect(codeReq).toBe(0);
+    expect(pathExists(v, "projects/smoke-demo/requirements/REQ-smoke-demo-002.md")).toBe(true);
+    // 2) 任务外键校验 + 创建走通
+    const codeTask = await runNewTask({
+      slug: "smoke-demo",
+      requirement: "REQ-smoke-demo-001",
+      title: "连字符任务",
+      due: "2026-11-30",
+      root,
+    });
+    expect(codeTask).toBe(0);
+    expect(pathExists(v, "projects/smoke-demo/tasks/TASK-smoke-demo-001.md")).toBe(true);
+    const content = readPmFile(v, "projects/smoke-demo/tasks/TASK-smoke-demo-001.md");
+    expect(content).toContain('requirement: "[[REQ-smoke-demo-001]]"');
+    expect(content).toContain('id: "TASK-smoke-demo-001"');
+    expect(logSpy.mock.calls.map((c) => String(c[0])).join("\n")).toContain("已创建任务");
+  });
 });

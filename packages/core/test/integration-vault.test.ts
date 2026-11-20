@@ -254,7 +254,7 @@ describe("TC-02 integration: writer", () => {
   it("TC-02-014: expectedMtimeMs 预检 → E_CONFLICT（含 expectedMtimeMs/currentMtimeMs）", () => {
     const vault = makeVault("vault-conflict-");
     const abs = writeMd(vault, "PM/projects/proj/project.md", PROJECT_X_MD);
-    const cur = fs.statSync(abs).mtimeMs;
+    const cur = Math.round(fs.statSync(abs).mtimeMs); // S5R1 OBS-4：writer 预检返回整数毫秒，基准同口径取整
     const res = atomicWriteFile(abs, "new content", { expectedMtimeMs: cur + 1000, pmRoot: path.join(vault, "PM") });
     expect(res.ok).toBe(false);
     if (!res.ok) {
@@ -268,17 +268,17 @@ describe("TC-02 integration: writer", () => {
     const vault = makeVault("vault-race-");
     const abs = writeMd(vault, "PM/projects/proj/project.md", PROJECT_X_MD);
     const pmRoot = path.join(vault, "PM");
-    const m0 = fs.statSync(abs).mtimeMs;
+    const m0 = Math.round(fs.statSync(abs).mtimeMs); // S5R1 OBS-4：整数毫秒口径（writer 预检/复查同口径）
     const w1 = atomicWriteFile(abs, "worker-1", { expectedMtimeMs: m0, pmRoot });
     expect(w1.ok).toBe(true);
     // 同一 mtime 粒度下第二个 worker 的复查需要确定性差异：人为 bump mtime 模拟并发窗口
-    // （兜底阈值与 writer 的 MTIME_EPSILON_MS=1 对齐，避免落在 epsilon 内的时钟粒度抖动漏检）
-    let m1 = fs.statSync(abs).mtimeMs;
-    if (Math.abs(m1 - m0) <= 1) {
+    // （兜底阈值取 epsilon(1ms) + 取整余量(≤0.5ms) 的安全上界 2ms，避免时钟粒度抖动漏检）
+    let m1 = Math.round(fs.statSync(abs).mtimeMs);
+    if (Math.abs(m1 - m0) <= 2) {
       const d = new Date();
       d.setTime(d.getTime() + 5000);
       fs.utimesSync(abs, d, d);
-      m1 = fs.statSync(abs).mtimeMs;
+      m1 = Math.round(fs.statSync(abs).mtimeMs);
     }
     expect(Math.abs(m1 - m0)).toBeGreaterThan(1);
     const w2 = atomicWriteFile(abs, "worker-2", { expectedMtimeMs: m0, pmRoot });
@@ -336,17 +336,17 @@ describe("TC-02 integration: moveStatus", () => {
   it("TC-02-019: moveStatus mtime 冲突（外部修改 → E_CONFLICT）", () => {
     const index = makeMoveFixture();
     const abs = index.scan.entries.find((e) => e.relPath === "projects/proj/tasks/TASK-proj-001.md")!.absPath;
-    const m0 = fs.statSync(abs).mtimeMs;
+    const m0 = Math.round(fs.statSync(abs).mtimeMs); // S5R1 OBS-4：整数毫秒口径（scan entry 同口径）
     // 外部追加修改文件（非应用写）
     fs.appendFileSync(abs, "\n<!-- 外部修改 -->\n");
-    let m1 = fs.statSync(abs).mtimeMs;
-    // 兜底阈值与 writer 的 MTIME_EPSILON_MS=1 对齐：外部修改若落在扫描后 1ms 内，
+    let m1 = Math.round(fs.statSync(abs).mtimeMs);
+    // 兜底阈值取 epsilon(1ms) + 取整余量(≤0.5ms) 的安全上界 2ms：外部修改若落在此窗口内，
     // 预检会因 epsilon 放行，必须人为 bump mtime 保证冲突确定性
-    if (Math.abs(m1 - m0) <= 1) {
+    if (Math.abs(m1 - m0) <= 2) {
       const d = new Date();
       d.setTime(d.getTime() + 1000);
       fs.utimesSync(abs, d, d);
-      m1 = fs.statSync(abs).mtimeMs;
+      m1 = Math.round(fs.statSync(abs).mtimeMs);
     }
     expect(Math.abs(m1 - m0)).toBeGreaterThan(1);
     const res = moveStatus(index, "TASK-proj-001", "doing");

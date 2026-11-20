@@ -1,4 +1,5 @@
 {
+  "_comment": "vaultPath 空串 = 回退为工程根目录（loadConfig 回退规则，S5R1 OBS-5）；pmRoot 相对路径相对 vaultPath 解析",
   "vaultPath": "",
   "pmRoot": "PM"
 }

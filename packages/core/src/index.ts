@@ -42,6 +42,7 @@ export {
 export { scanTree, classifyFile, type Classification } from "./scanner.js";
 export { parseFile, type ParseResult } from "./parser.js";
 export { buildIndex, reindexFile, deriveRequirementTasks, parseWikiLinks } from "./indexer.js";
+export { REQ_ID_PATTERN, TASK_ID_PATTERN, INBOX_ID_PATTERN, REQ_WIKI_PATTERN } from "./id.js"; // S5R1 ISSUE-3：编号/wiki-link 正则单一出处（支持连字符 slug 段）
 export { moveStatus, isValidTransition, moveLocks, runExclusive } from "./services/status.js";
 export { deriveStats } from "./services/stats.js";
 export { search } from "./services/search.js";

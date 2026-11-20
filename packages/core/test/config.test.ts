@@ -47,12 +47,35 @@ describe("TC-02 config", () => {
     if (!r3.ok) expect(r3.error.code).toBe("E_CONFIG_INVALID");
   });
 
-  it("doc: vaultPath 为空 → E_CONFIG_INVALID", () => {
+  it("doc: vaultPath 为空但 pmRoot 也为空 → E_CONFIG_INVALID（OBS-5：空 vaultPath 本身已合法，回退由 loadConfig 处理）", () => {
     const root = makeTempRoot("root-emptyvault-");
-    fs.writeFileSync(path.join(root, "pm.config.json"), JSON.stringify({ vaultPath: "" }));
+    fs.writeFileSync(path.join(root, "pm.config.json"), JSON.stringify({ vaultPath: "", pmRoot: "" }));
     const r = loadConfig(root);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error.code).toBe("E_CONFIG_INVALID");
+  });
+
+  it("S5R1 OBS-5: vaultPath 空串回退为工程根目录，pmRoot 相对路径相对 vaultPath 解析", () => {
+    const root = makeTempRoot("root-emptyvault-fallback-");
+    fs.writeFileSync(path.join(root, "pm.config.json"), JSON.stringify({ vaultPath: "", pmRoot: "PM" }));
+    const r = loadConfig(root);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.vaultPath).toBe(root);
+      expect(r.value.pmRoot).toBe(path.join(root, "PM"));
+    }
+  });
+
+  it("S5R1 OBS-5: vaultPath 空白串视同空串（回退工程根）；绝对 pmRoot 原样保留", () => {
+    const root = makeTempRoot("root-blankvault-");
+    const absPmRoot = path.join(root, "vault", "PM");
+    fs.writeFileSync(path.join(root, "pm.config.json"), JSON.stringify({ vaultPath: "  ", pmRoot: absPmRoot }));
+    const r = loadConfig(root);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.vaultPath).toBe(root);
+      expect(r.value.pmRoot).toBe(absPmRoot);
+    }
   });
 
   it("TC-02-025: vault 不存在（vaultPath 指向不存在目录）→ loadConfig E_CONFIG_INVALID", () => {
@@ -64,10 +87,10 @@ describe("TC-02 config", () => {
     if (!r.ok) expect(r.error.code).toBe("E_CONFIG_INVALID");
   });
 
-  it("doc: RAW_CONFIG_DEFAULTS pmRoot = vaultPath/PM（02-core §4.1）+ ZConfig 字段校验", () => {
+  it("doc: RAW_CONFIG_DEFAULTS pmRoot = vaultPath/PM（02-core §4.1）+ ZConfig 字段校验（OBS-5：空 vaultPath 合法，回退由 loadConfig 处理）", () => {
     expect(RAW_CONFIG_DEFAULTS("D:\\vault").pmRoot).toBe(path.join("D:\\vault", "PM"));
     expect(ZConfig.safeParse({ vaultPath: "v", pmRoot: "p" }).success).toBe(true);
-    expect(ZConfig.safeParse({ vaultPath: "", pmRoot: "p" }).success).toBe(false);
-    expect(ZConfig.safeParse({ vaultPath: "v" }).success).toBe(false);
+    expect(ZConfig.safeParse({ vaultPath: "", pmRoot: "p" }).success).toBe(true); // OBS-5：空串允许，语义 = 工程根
+    expect(ZConfig.safeParse({ vaultPath: "v" }).success).toBe(false); // pmRoot 缺失仍非法
   });
 });

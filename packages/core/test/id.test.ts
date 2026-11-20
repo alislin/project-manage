@@ -4,6 +4,7 @@ import {
   isNumberId,
   parseNumberId,
   REQ_ID_PATTERN,
+  REQ_WIKI_PATTERN,
   TASK_ID_PATTERN,
   INBOX_ID_PATTERN,
 } from "../src/id";
@@ -46,5 +47,21 @@ describe("TC-01 编号分配", () => {
     expect(REQ_ID_PATTERN.test("REQ-proj-001")).toBe(true);
     expect(TASK_ID_PATTERN.test("TASK-proj-001")).toBe(true);
     expect(INBOX_ID_PATTERN.test("INBOX-inbox-001")).toBe(true);
+  });
+
+  it("S5R1 ISSUE-3: 编号正则支持连字符 slug 段（REQ-smoke-demo-001 合法，边缘连字符非法）", () => {
+    expect(isNumberId("REQ", "REQ-smoke-demo-001")).toBe(true);
+    expect(isNumberId("TASK", "TASK-smoke-demo-001")).toBe(true);
+    expect(isNumberId("INBOX", "INBOX-smoke-demo-001")).toBe(true);
+    expect(REQ_ID_PATTERN.test("REQ-a-b-c-001")).toBe(true); // 多段连字符
+    expect(REQ_ID_PATTERN.test("REQ--demo-001")).toBe(false); // 空段/边缘 "-"
+    expect(REQ_ID_PATTERN.test("REQ-demo--001")).toBe(false); // 连续 "-"（序号段前）
+    expect(REQ_ID_PATTERN.test("REQ-demo-")).toBe(false);
+    // 序号 = 最后一个 "-" 后三位
+    expect(parseNumberId("REQ", "REQ-smoke-demo-001")).toEqual({ slug: "smoke-demo", seq: 1 });
+    expect(allocateSeq(["REQ-smoke-demo-001"], "REQ", "smoke-demo")).toEqual({ ok: true, value: "REQ-smoke-demo-002" });
+    // wiki-link 同源正则
+    expect(REQ_WIKI_PATTERN.test("[[REQ-smoke-demo-001]]")).toBe(true);
+    expect(REQ_WIKI_PATTERN.test("[[REQ-smoke-demo-01]]")).toBe(false);
   });
 });

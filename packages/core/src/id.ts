@@ -4,10 +4,19 @@ import { E_SEQ_EXHAUSTED } from "./errors.js";
 /** 编号 id 前缀（01-数据规范 §1.5：REQ/TASK/INBOX） */
 export type NumberPrefix = "REQ" | "TASK" | "INBOX";
 
-/** 编号正则（R-106 三位序号统一；01-数据规范 §1.2/§1.3/§1.4，与 Slug 正则互补） */
-export const REQ_ID_PATTERN = /^REQ-[A-Za-z0-9一-鿿]+-\d{3}$/;
-export const TASK_ID_PATTERN = /^TASK-[A-Za-z0-9一-鿿]+-\d{3}$/;
-export const INBOX_ID_PATTERN = /^INBOX-[A-Za-z0-9一-鿿]+-\d{3}$/;
+/**
+ * 编号 id 的 slug 段（S5R1 ISSUE-3）：与 Slug 正则（01-数据规范 §5）互补，
+ * 支持段间单 "-"（如 smoke-demo），即 `[A-Za-z0-9一-鿿]+(-[A-Za-z0-9一-鿿]+)*`。
+ * 序号以最后一个 "-" 后三位为准（parseNumberId 用 lastIndexOf 切分）。
+ */
+export const SLUG_SEGMENT = "[A-Za-z0-9一-鿿]+(?:-[A-Za-z0-9一-鿿]+)*";
+
+/** 编号正则（R-106 三位序号统一；01-数据规范 §1.2/§1.3/§1.4，与 Slug 正则互补；S5R1 ISSUE-3 支持连字符 slug 段） */
+export const REQ_ID_PATTERN = new RegExp(`^REQ-${SLUG_SEGMENT}-\\d{3}$`);
+export const TASK_ID_PATTERN = new RegExp(`^TASK-${SLUG_SEGMENT}-\\d{3}$`);
+export const INBOX_ID_PATTERN = new RegExp(`^INBOX-${SLUG_SEGMENT}-\\d{3}$`);
+/** requirement wiki-link（[[REQ-<slug>-NNN]]，01-数据规范 §1.3；与 ZTask.requirement 同源） */
+export const REQ_WIKI_PATTERN = new RegExp(`^\\[\\[REQ-${SLUG_SEGMENT}-\\d{3}\\]\\]$`);
 
 export const NUMBER_ID_PATTERNS: Record<NumberPrefix, RegExp> = {
   REQ: REQ_ID_PATTERN,

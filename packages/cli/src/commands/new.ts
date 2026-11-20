@@ -6,6 +6,7 @@ import {
   buildIndex,
   loadConfig,
   normalizePath,
+  REQ_ID_PATTERN,
   today,
   type Config,
 } from "@pm/core";
@@ -18,8 +19,8 @@ const PROJECT_STATUSES = ["active", "paused", "done", "archived"] as const;
 const REQ_STATUSES = ["pool", "reviewing", "accepted", "rejected", "done"] as const;
 const TASK_STATUSES = ["todo", "doing", "done", "cancelled"] as const;
 const TASK_PRIORITIES = ["P0", "P1", "P2", "P3"] as const;
-/** 01-数据规范 §1.3 ZTask.requirement 正则 */
-const REQ_ID_RE = /^REQ-[A-Za-z0-9一-鿿]+-\d{3}$/;
+/** 01-数据规范 §1.3 requirement 编号正则（同源 core id.ts REQ_ID_PATTERN，S5R1 ISSUE-3 支持连字符 slug 段） */
+const REQ_ID_RE = REQ_ID_PATTERN;
 
 export interface NewProjectOpts {
   name?: string;

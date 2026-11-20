@@ -33,6 +33,9 @@ error.file, error.expectedMtimeMs, error.currentMtimeMs  // §6.5
 - 时间字段格式：`YYYY-MM-DD`（ISO 日期）。
 - 时间戳：ISO 8601 UTC（`createdAt` 之外，详见 02-core §2.2 `FileEntry.mtimeMs`，冲突检测用）。
 - `mtimeMs`：核心业务响应载荷中嵌入 `{ path, mtimeMs }`（`02-core §2.2/§2.7`），写冲突时的校验基准。
+  > **整数毫秒口径**（S5R1 OBS-4）：`mtimeMs` 一律为写盘后 `stat` 的取整值（`Math.round`，整数毫秒）。
+  > Windows/NTFS 原生返回浮点（如 `1795144857216.1277`），core `writer.statMtimeMs` 统一取整后再进入
+  > 自写缓存/scan/index/响应载荷，保证 JSON 数值稳定、跨平台一致；冲突比较 epsilon（1ms）不受 ≤0.5ms 取整差影响。
 
 ### 1.2 错误码 ↔ HTTP 状态表（§6.5，统一 `02-core §3.1` 与 `03-cli §1.3`）
 
@@ -237,7 +240,8 @@ const ZDeriveTask = z.object({
 ```ts
 const ZNewTask = z.object({
   title: z.string().min(1).max(200),
-  requirement: z.string().regex(/^\[\[REQ-[A-Za-z0-9一-鿿]+-\d{3}\]\]$/, "需在同项目已存在的需求上"),
+  // slug 段支持连字符（S5R1 ISSUE-3，同源 01-数据规范 §1.5）
+  requirement: z.string().regex(/^\[\[REQ-[A-Za-z0-9一-鿿]+(?:-[A-Za-z0-9一-鿿]+)*-\d{3}\]\]$/, "需在同项目已存在的需求上"),
   priority: z.enum(["P0", "P1", "P2", "P3"]).default("P2"),
   due: IsoDate,
   status: z.enum(["todo", "doing", "done", "cancelled"]).default("todo"),

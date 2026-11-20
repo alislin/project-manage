@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import chokidar from "chokidar";
-import { isSelfWrite } from "./writer.js";
+import { isSelfWrite, statMtimeMs } from "./writer.js";
 import { normalizePath, type Config } from "./types.js";
 
 /** 监听事件（design §4.5：onChange 增加或变化，onUnlink 删除） */
@@ -20,7 +20,7 @@ export interface StartOptions {
 
 function statMtime(p: string): number {
   try {
-    return fs.statSync(p).mtimeMs;
+    return statMtimeMs(p); // S5R1 OBS-4：整数毫秒，与 writer 自写缓存口径一致（isSelfWrite 精确比对）
   } catch {
     return Number.NaN;
   }

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import { z, type ZodIssue, type ZodTypeAny } from "zod";
 import matter from "gray-matter";
+import { statMtimeMs } from "./writer.js";
 
 /**
  * parseFile 结果（design §4.3）：
@@ -29,7 +30,7 @@ function toIsoStringLocal(d: Date): string {
 }
 
 function statMtime(absPath: string): number {
-  return fs.statSync(absPath).mtimeMs;
+  return statMtimeMs(absPath); // S5R1 OBS-4：整数毫秒
 }
 
 /**

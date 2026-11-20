@@ -5,6 +5,7 @@ import {
   IsoDate,
   Priority,
   ProjectStatus,
+  REQ_WIKI_PATTERN,
   ReqStatus,
   Slug,
   TaskStatus,
@@ -61,7 +62,8 @@ export const ZDeriveTask = z.object({
 /** 05-server §3.2 ZNewTask */
 export const ZNewTask = z.object({
   title: z.string().min(1).max(200),
-  requirement: z.string().regex(/^\[\[REQ-[A-Za-z0-9一-鿿]+-\d{3}\]\]$/, "requirement 需形如 [[REQ-<slug>-NNN]]"),
+  // 同源 core id.ts REQ_WIKI_PATTERN（S5R1 ISSUE-3：支持连字符 slug 段，如 [[REQ-smoke-demo-001]]）
+  requirement: z.string().regex(REQ_WIKI_PATTERN, "requirement 需形如 [[REQ-<slug>-NNN]]"),
   priority: Priority.default("P2"),
   due: IsoDate,
   status: TaskStatus.default("todo"),

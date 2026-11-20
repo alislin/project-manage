@@ -138,7 +138,7 @@ async function patchStatus(state: RouteState, id: string, body: PatchBody): Prom
     if (body.expectedMtimeMs !== undefined) {
       let currentMtimeMs: number | undefined;
       try {
-        currentMtimeMs = fs.statSync(current.file.absPath).mtimeMs;
+        currentMtimeMs = Math.round(fs.statSync(current.file.absPath).mtimeMs); // S5R1 OBS-4：整数毫秒
       } catch {
         currentMtimeMs = undefined; // 文件已被外部删除：交给 moveStatus 内部检查
       }

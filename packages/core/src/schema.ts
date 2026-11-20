@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { INBOX_ID_PATTERN, REQ_ID_PATTERN, REQ_WIKI_PATTERN, TASK_ID_PATTERN } from "./id.js";
 
 /** ISO 日期 "YYYY-MM-DD"（01-数据规范 §5；日历合法性校验，如 2026-02-30 非法） */
 export const IsoDate = z
@@ -43,7 +44,7 @@ export const ZProject = z.object({
 
 export const ZRequirement = z.object({
   type: z.literal("requirement"),
-  id: z.string().regex(/^REQ-[A-Za-z0-9一-鿿]+-\d{3}$/, "id 需形如 REQ-<slug>-NNN"),
+  id: z.string().regex(REQ_ID_PATTERN, "id 需形如 REQ-<slug>-NNN"),
   title: z.string().min(1).max(200),
   status: ReqStatus,
   priority: Priority,
@@ -58,12 +59,12 @@ export const ZRequirement = z.object({
 
 export const ZTask = z.object({
   type: z.literal("task"),
-  id: z.string().regex(/^TASK-[A-Za-z0-9一-鿿]+-\d{3}$/, "id 需形如 TASK-<slug>-NNN"),
+  id: z.string().regex(TASK_ID_PATTERN, "id 需形如 TASK-<slug>-NNN"),
   title: z.string().min(1).max(200),
   status: TaskStatus,
   requirement: z
     .string()
-    .regex(/^\[\[REQ-[A-Za-z0-9一-鿿]+-\d{3}\]\]$/, "requirement 需形如 [[REQ-<slug>-NNN]]"),
+    .regex(REQ_WIKI_PATTERN, "requirement 需形如 [[REQ-<slug>-NNN]]"),
   priority: Priority,
   estimate: z.number().optional().refine((n) => n === undefined || n > 0, "estimate 为正数（人日）"),
   due: IsoDate,
@@ -76,7 +77,7 @@ export const ZTask = z.object({
 
 export const ZInboxEntry = z.object({
   type: z.literal("inbox"),
-  id: z.string().regex(/^INBOX-[A-Za-z0-9一-鿿]+-\d{3}$/, "id 需形如 INBOX-<slug>-NNN"),
+  id: z.string().regex(INBOX_ID_PATTERN, "id 需形如 INBOX-<slug>-NNN"),
   slug: Slug.default("inbox"),
   created: IsoDate,
   tags: z.array(z.string().min(1).transform((s) => s.trim()).refine((s) => s.length > 0)).default([]),

@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { isSelfWrite } from "./writer.js";
+import { isSelfWrite, statMtimeMs } from "./writer.js";
 import { normalizePath, type FileEntry, type VaultScan } from "./types.js";
 
 /** 文件分类结果（design §4.4 表 + 用户要求 classifyFile 含 inbox/archive 排除） */
@@ -41,8 +41,9 @@ export function scanTree(dir: string): VaultScan {
       if (!e.isFile()) continue;
       const st = fs.statSync(absPath);
       const relPath = normalizePath(path.relative(dir, absPath));
-      if (isSelfWrite(absPath, st.mtimeMs)) continue; // @pm 自忽略（design §4.2, design §5.3）
-      entries.push({ absPath, relPath, mtimeMs: st.mtimeMs, size: st.size });
+      const mtimeMs = statMtimeMs(absPath); // S5R1 OBS-4：整数毫秒（与 writer 自写缓存口径一致）
+      if (isSelfWrite(absPath, mtimeMs)) continue; // @pm 自忽略（design §4.2, design §5.3）
+      entries.push({ absPath, relPath, mtimeMs, size: st.size });
     }
   };
   walk(dir);

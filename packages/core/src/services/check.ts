@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import matter from "gray-matter";
-import { parseNumberId } from "../id.js";
+import { parseNumberId, REQ_WIKI_PATTERN } from "../id.js";
 import { parseWikiLinks } from "../indexer.js";
 import { locateRecords } from "./locate.js";
 import { normalizePath, type CheckIssue, type CheckResult, type VaultIndex } from "../types.js";
@@ -183,8 +183,8 @@ export function runCheck(index: VaultIndex): CheckResult {
 // 内部辅助
 // ---------------------------------------------------------------------------
 
-/** 任务→需求 wiki-link 合法格式（01-数据规范 §1.3/§6.2，与 ZTask.requirement 正则一致） */
-const WIKI_REQ_PATTERN = /^\[\[REQ-[A-Za-z0-9一-鿿]+-\d{3}\]\]$/;
+/** 任务→需求 wiki-link 合法格式（01-数据规范 §1.3/§6.2，与 ZTask.requirement 正则同源：id.ts REQ_WIKI_PATTERN） */
+const WIKI_REQ_PATTERN = REQ_WIKI_PATTERN;
 
 /** ISO 日期形状（date-inverted 仅对可比较的日期值判定；非法格式交给 invalid-frontmatter） */
 const ISO_SHAPE = /^\d{4}-\d{2}-\d{2}$/;

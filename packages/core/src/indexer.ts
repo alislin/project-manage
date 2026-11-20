@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import { parseNumberId } from "./id.js";
 import { parseFile, type ParseResult } from "./parser.js";
 import { classifyFile, scanTree } from "./scanner.js";
+import { statMtimeMs } from "./writer.js";
 import { ZInboxEntry, ZProject, ZRequirement, ZTask, type InboxEntry, type Project, type Requirement, type Task } from "./schema.js";
 import { normalizePath, type BrokenFile, type Config, type FileEntry, type UnnumberedFile, type VaultIndex } from "./types.js";
 import type { ZodIssue, ZodTypeAny } from "zod";
@@ -46,7 +47,7 @@ function hasFrontmatter(absPath: string): boolean {
 
 function statEntry(absPath: string, relPath: string): FileEntry {
   const st = fs.statSync(absPath);
-  return { absPath, relPath, mtimeMs: st.mtimeMs, size: st.size };
+  return { absPath, relPath, mtimeMs: Math.round(st.mtimeMs), size: st.size }; // S5R1 OBS-4：整数毫秒（writer.statMtimeMs 同口径）
 }
 
 /** design §2.3 BrokenFile.issues：ZodIssue 缩略（path → 字符串，code/message） */
@@ -133,6 +134,30 @@ function removeRecord(index: VaultIndex, old: Project | Requirement | Task | Inb
             : index.broken;
   const i = arr.indexOf(old);
   if (i >= 0) arr.splice(i, 1);
+}
+
+/**
+ * requirementsByProject 分组重建（02-core §5.2.4；S5R1 BUG-1）：从 index.requirements 实时聚合，
+ * 覆盖式重建（clear + 重填）——需求记录插入/删除/迁移后空组随之清除。
+ * buildIndex 与 reindexFile 共用本函数，保证增量路径与全量路径同源
+ * （tester-s5 BUG-1：增量 reindexFile 原不维护该 map，运行期列表/统计接口永久失真）。
+ */
+function rebuildRequirementsByProject(index: VaultIndex): void {
+  index.requirementsByProject.clear();
+  for (const r of index.requirements) {
+    const slug = parseNumberId("REQ", r.id)?.slug;
+    if (!slug) continue;
+    const arr = index.requirementsByProject.get(slug) ?? [];
+    arr.push(r);
+    index.requirementsByProject.set(slug, arr);
+  }
+  for (const arr of index.requirementsByProject.values()) arr.sort(byId);
+}
+
+/** 增量路径公共尾部：requirementsByProject 分组 + requirementTasks 反链一并重算（与 buildIndex 同口径） */
+function resyncDerivedMaps(index: VaultIndex): void {
+  rebuildRequirementsByProject(index);
+  index.requirementTasks = deriveRequirementTasks(index.tasks, new Set(index.requirements.map((r) => r.id)));
 }
 
 /** 按分类插入记录（design §5.2.5 跨文件链接校验：id 中 slug 必须与所在 projects/<slug>/ 一致）；返回 id-path-mismatch 的 BrokenFile（若有） */
@@ -244,22 +269,14 @@ export function buildIndex(config: Config): VaultIndex {
 
   resort(index);
 
-  // design §5.2.9：requirementTasks = deriveRequirementTasks(tasks)（01-数据规范 §6.3，悬空链接聚合时跳过）
-  index.requirementTasks = deriveRequirementTasks(index.tasks, new Set(index.requirements.map((r) => r.id)));
-  // design §5.2.4：requirementsByProject（按 id 升序，id 中 slug 与所在目录一致已校验）
-  for (const r of index.requirements) {
-    const slug = parseNumberId("REQ", r.id)?.slug;
-    if (!slug) continue;
-    const arr = requirementsByProject.get(slug) ?? [];
-    arr.push(r);
-    requirementsByProject.set(slug, arr);
-  }
-  for (const arr of requirementsByProject.values()) arr.sort(byId);
+  // design §5.2.9 / §5.2.4：requirementTasks 反链（悬空链接聚合时跳过，01-数据规范 §6.3）
+  // + requirementsByProject 分组（按 id 升序，id 中 slug 与所在目录一致已校验）——S5R1 BUG-1 起共用 resyncDerivedMaps
+  resyncDerivedMaps(index);
 
   return index;
 }
 
-/** 增量：单文件变更后用（design §5.4：更新 / 删除 / 排序稳定） */
+/** 增量：单文件变更后用（design §5.4：更新 / 删除 / 排序稳定；S5R1 BUG-1：同步维护 requirementsByProject） */
 export function reindexFile(index: VaultIndex, absPath: string): void {
   const relPath = normalizePath(path.relative(index.config.pmRoot, absPath));
   const old = index.byPath.get(absPath);
@@ -268,7 +285,7 @@ export function reindexFile(index: VaultIndex, absPath: string): void {
     // 删除：从 byPath + 三类数组移除（design §5.4）
     index.byPath.delete(absPath);
     if (old) removeRecord(index, old);
-    index.requirementTasks = deriveRequirementTasks(index.tasks, new Set(index.requirements.map((r) => r.id)));
+    resyncDerivedMaps(index);
     return;
   }
 
@@ -285,7 +302,7 @@ export function reindexFile(index: VaultIndex, absPath: string): void {
 
   if (cls === "archived" || cls === "unnumbered") {
     index.byPath.delete(absPath); // 归档不入索引；unnumbered 不算索引（design §4.4/§5.2.7）
-    index.requirementTasks = deriveRequirementTasks(index.tasks, new Set(index.requirements.map((r) => r.id)));
+    resyncDerivedMaps(index);
     return;
   }
 
@@ -297,7 +314,7 @@ export function reindexFile(index: VaultIndex, absPath: string): void {
     index.byPath.set(absPath, bf);
     index.broken.push(bf);
     resort(index);
-    index.requirementTasks = deriveRequirementTasks(index.tasks, new Set(index.requirements.map((r) => r.id)));
+    resyncDerivedMaps(index);
     return;
   }
 
@@ -306,11 +323,11 @@ export function reindexFile(index: VaultIndex, absPath: string): void {
     index.byPath.set(absPath, bf);
     index.broken.push(bf);
     resort(index);
-    index.requirementTasks = deriveRequirementTasks(index.tasks, new Set(index.requirements.map((r) => r.id)));
+    resyncDerivedMaps(index);
     return;
   }
 
   insertRecord(index, entry, result, cls);
   resort(index);
-  index.requirementTasks = deriveRequirementTasks(index.tasks, new Set(index.requirements.map((r) => r.id)));
+  resyncDerivedMaps(index);
 }

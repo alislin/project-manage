@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import { reindexFile } from "@pm/core";
 import {
   makeVaultRoot,
   writePmFile,
@@ -609,5 +610,104 @@ describe("TC-05 REST API", () => {
     const res = await built.app.inject({ method: "GET", url: "/api/unknown" });
     expect(res.statusCode).toBe(404);
     expect(JSON.parse(res.body).error.code).toBe("E_NOT_FOUND");
+  });
+
+  // ----- S5R1 修复回归（tester-s5 问题清单） -----
+
+  it("S5R1 BUG-1 回归: 同一服务实例内 POST 创建需求后立即 GET requirements 列表与 overview totals 反映新增（增量 reindex 维护 requirementsByProject）", async () => {
+    await newServer(seedProjectOnly);
+    // 1) 同实例 POST 创建需求（不经重启/全量重建）
+    const post = await built.app.inject({
+      method: "POST",
+      url: "/api/projects/web/requirements",
+      payload: { title: "增量需求", source: "smoke-s5" },
+    });
+    expect(post.statusCode).toBe(201);
+    // 2) requirements 列表立即反映新增（修复前恒 []）
+    const list = await built.app.inject({ method: "GET", url: "/api/projects/web/requirements" });
+    expect(list.statusCode).toBe(200);
+    const listBody = JSON.parse(list.body) as { data: { requirements: Array<{ id: string }> } };
+    expect(listBody.data.requirements.map((r) => r.id)).toEqual(["REQ-web-001"]);
+    // 3) overview totals 反映新增（修复前恒 0）
+    const overview = await built.app.inject({ method: "GET", url: "/api/projects/web/overview" });
+    expect(overview.statusCode).toBe(200);
+    const totals = (JSON.parse(overview.body) as { data: { totals: { requirements: { total: number } } } }).data.totals;
+    expect(totals.requirements.total).toBe(1);
+    // 4) 同实例 POST 任务后 tasks 列表立即反映（tasks 依赖同 map 的需求集合过滤）
+    const postTask = await built.app.inject({
+      method: "POST",
+      url: "/api/projects/web/tasks",
+      payload: { title: "增量任务", requirement: "[[REQ-web-001]]", due: "2026-11-30" },
+    });
+    expect(postTask.statusCode).toBe(201);
+    const tasks = await built.app.inject({ method: "GET", url: "/api/projects/web/tasks" });
+    expect((JSON.parse(tasks.body) as { data: { tasks: Array<{ id: string }> } }).data.tasks.map((t) => t.id)).toEqual(["TASK-web-001"]);
+    // 5) 删除需求记录 → 增量 reindex（删除分支，与 watcher onUnlink 同路径，02-core §5.4）：
+    //    列表/统计清空，requirementsByProject 空组被清理
+    //    （注：不走 waitFor 等真实 unlink 事件——Windows/chokidar 对「自写过滤 add 后快速删除」
+    //    可能不投递 unlink 事件，属事件投递局限，非本修复范围；此处直接驱动同一条增量路径）
+    const absReq = pmPath(vault, "projects/web/requirements/REQ-web-001.md");
+    fs.rmSync(absReq);
+    reindexFile(built.state.index, absReq);
+    const listAfter = await built.app.inject({ method: "GET", url: "/api/projects/web/requirements" });
+    expect((JSON.parse(listAfter.body) as { data: { requirements: unknown[] } }).data.requirements).toEqual([]);
+    const tasksAfter = await built.app.inject({ method: "GET", url: "/api/projects/web/tasks" });
+    expect((JSON.parse(tasksAfter.body) as { data: { tasks: unknown[] } }).data.tasks).toEqual([]);
+    const overviewAfter = await built.app.inject({ method: "GET", url: "/api/projects/web/overview" });
+    expect((JSON.parse(overviewAfter.body) as { data: { totals: { requirements: { total: number } } } }).data.totals.requirements.total).toBe(0);
+    expect(built.state.index.requirementsByProject.has("web")).toBe(false); // 空组清理
+  });
+
+  it("S5R1 BUG-2 回归: 非法 JSON body → 400 E_USAGE 统一信封（FST_ERR_* 不再裸透传 500）", async () => {
+    await newServer(seedWeb());
+    const res = await built.app.inject({
+      method: "POST",
+      url: "/api/projects/web/requirements",
+      payload: "{not-valid-json",
+      headers: { "content-type": "application/json" },
+    });
+    expect(res.statusCode).toBe(400);
+    const body = JSON.parse(res.body) as { ok: boolean; error: { code: string; message: string } };
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("E_USAGE");
+    expect(typeof body.error.message).toBe("string");
+  });
+
+  it("S5R1 ISSUE-3 全链路: 连字符 slug smoke-demo 建项目→需求→任务走通（含列表/详情/整数 mtimeMs）", async () => {
+    await newServer();
+    // 1) 建项目（Slug 本就允许连字符）
+    const p = await built.app.inject({
+      method: "POST",
+      url: "/api/projects",
+      payload: { slug: "smoke-demo", name: "Smoke Demo", period: ["2026-01-01", "2026-12-31"] },
+    });
+    expect(p.statusCode).toBe(201);
+    // 2) 建需求 → REQ-smoke-demo-001（修复前编号正则拒绝连字符 slug，链路断裂）
+    const r = await built.app.inject({
+      method: "POST",
+      url: "/api/projects/smoke-demo/requirements",
+      payload: { title: "连字符需求", source: "smoke-s5" },
+    });
+    expect(r.statusCode).toBe(201);
+    expect((JSON.parse(r.body) as { data: { id: string; mtimeMs: number } }).data.id).toBe("REQ-smoke-demo-001");
+    // 3) 建任务 → TASK-smoke-demo-001（修复前 422 E_VALIDATION）
+    const t = await built.app.inject({
+      method: "POST",
+      url: "/api/projects/smoke-demo/tasks",
+      payload: { title: "连字符任务", requirement: "[[REQ-smoke-demo-001]]", due: "2026-11-30" },
+    });
+    expect(t.statusCode).toBe(201);
+    expect((JSON.parse(t.body) as { data: { created: { id: string } } }).data.created.id).toBe("TASK-smoke-demo-001");
+    // 4) 列表与详情（增量 requirementsByProject 分组按连字符 slug 归组）
+    const reqs = await built.app.inject({ method: "GET", url: "/api/projects/smoke-demo/requirements" });
+    expect((JSON.parse(reqs.body) as { data: { requirements: unknown[] } }).data.requirements).toHaveLength(1);
+    const tasks = await built.app.inject({ method: "GET", url: "/api/projects/smoke-demo/tasks" });
+    expect((JSON.parse(tasks.body) as { data: { tasks: unknown[] } }).data.tasks).toHaveLength(1);
+    const detail = await built.app.inject({ method: "GET", url: "/api/tasks/TASK-smoke-demo-001" });
+    expect(detail.statusCode).toBe(200);
+    const detailBody = JSON.parse(detail.body) as { data: { task: { mtimeMs: number }; relatedRequirement?: { id: string } } };
+    expect(detailBody.data.relatedRequirement?.id).toBe("REQ-smoke-demo-001");
+    // 5) OBS-4：mtimeMs 为整数毫秒
+    expect(Number.isInteger(detailBody.data.task.mtimeMs)).toBe(true);
   });
 });

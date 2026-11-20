@@ -47,6 +47,17 @@ export function isSelfWrite(absPath: string, mtimeMs: number): boolean {
   return selfWriteCache.get(absPath) === mtimeMs;
 }
 
+/**
+ * mtimeMs stat 读数（S5R1 OBS-4）：统一 Math.round 取整为整数毫秒。
+ * Windows/NTFS 的 stat.mtimeMs 为浮点（如 1795144857216.1277），取整保证：
+ * 1) API JSON 载荷数值稳定（自写缓存、写盘后返回值、scan/index FileEntry、GET 载荷同口径）；
+ * 2) registerSelfWrite 与 watcher/scanner 的 isSelfWrite 精确比对不因浮点失配；
+ * 3) 冲突预检 expectedMtimeMs/currentMtimeMs 比较口径一致（epsilon=1ms 不受 ≤0.5ms 取整差影响）。
+ */
+export function statMtimeMs(absPath: string): number {
+  return Math.round(fs.statSync(absPath).mtimeMs);
+}
+
 // ---------------------------------------------------------------------------
 // 原子写（design §6.1）
 // ---------------------------------------------------------------------------
@@ -71,7 +82,7 @@ export function atomicWriteFile(absPath: string, content: string, opts: WriteOpt
   // 1) mtime 预检（design §6.1）
   let currentMtimeMs: number | undefined;
   try {
-    currentMtimeMs = fs.statSync(absPath).mtimeMs;
+    currentMtimeMs = statMtimeMs(absPath);
   } catch {
     /* 文件不存在：跳过预检 */
   }
@@ -109,7 +120,7 @@ export function atomicWriteFile(absPath: string, content: string, opts: WriteOpt
       let deletedInWindow = false;
       let recheckMtimeMs = 0;
       try {
-        recheckMtimeMs = fs.statSync(absPath).mtimeMs;
+        recheckMtimeMs = statMtimeMs(absPath);
       } catch {
         deletedInWindow = true; // 预检时存在、rename 前消失 → 外部并发删除
       }
@@ -155,8 +166,8 @@ export function atomicWriteFile(absPath: string, content: string, opts: WriteOpt
     }
   }
 
-  // 5) rename 成功后登记自写（design §5.3；登记晚于复查，避免过滤掉真实冲突）
-  const afterMtimeMs = fs.statSync(absPath).mtimeMs;
+  // 5) rename 成功后登记自写（design §5.3；登记晚于复查，避免过滤掉真实冲突）；mtimeMs 取整（S5R1 OBS-4）
+  const afterMtimeMs = statMtimeMs(absPath);
   registerSelfWrite(absPath, afterMtimeMs);
 
   const entry: FileEntry = {

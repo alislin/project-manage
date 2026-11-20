@@ -32,12 +32,13 @@ export function syncScanEntry(index: VaultIndex, absPath: string): void {
   let entry = index.scan.entries.find((e) => e.absPath === absPath);
   try {
     const st = fs.statSync(absPath);
+    const mtimeMs = Math.round(st.mtimeMs); // S5R1 OBS-4：整数毫秒（core writer.statMtimeMs 同口径）
     if (entry) {
-      entry.mtimeMs = st.mtimeMs;
+      entry.mtimeMs = mtimeMs;
       entry.size = st.size;
       entry.relPath = relPath;
     } else {
-      entry = { absPath, relPath, mtimeMs: st.mtimeMs, size: st.size };
+      entry = { absPath, relPath, mtimeMs, size: st.size };
       index.scan.entries.push(entry);
       index.scan.entries.sort(compareRelPath);
     }
