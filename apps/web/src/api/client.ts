@@ -6,7 +6,9 @@
  */
 import type {
   ApiErrorBody,
+  CreateProjectData,
   Envelope,
+  NewProjectBody,
   OverviewData,
   PatchStatusBody,
   PatchStatusData,
@@ -20,6 +22,13 @@ import type {
 /** 客户端补充的错误码（非服务端 02-core §3.1 错误码） */
 export const E_NETWORK = "E_NETWORK";
 export const E_INVALID_RESPONSE = "E_INVALID_RESPONSE";
+
+/**
+ * E_INVALID_RESPONSE 统一排查指引（S11 hotfix 问题 2）：
+ * HTTP 200 但响应非 JSON/缺信封，典型根因是后端未启动，或 dev 代理（vite server.proxy）
+ * 指向了错误端口——被占用的 3000 上跑着别的应用。文案附可行动的指引并在 ErrorToast 完整展示。
+ */
+const INVALID_RESPONSE_HINT = "后端未启动或 API 端口不符，请运行 pm serve 或设置 PM_API_TARGET";
 
 export class ApiError extends Error {
   /** 服务端错误码（02-core §3.1）或客户端 E_NETWORK / E_INVALID_RESPONSE */
@@ -69,11 +78,24 @@ export async function apiRequest<T>(path: string, init?: RequestInit, opts?: { s
   try {
     envelope = (await res.json()) as Envelope<T>;
   } catch {
-    fail(new ApiError(E_INVALID_RESPONSE, `响应不是合法 JSON（HTTP ${res.status}）`, res.status));
+    // S11：HTTP 200 但非 JSON（如代理打到别的应用返回 HTML）→ 明确文案 + 排查指引
+    fail(
+      new ApiError(
+        E_INVALID_RESPONSE,
+        `${INVALID_RESPONSE_HINT}（HTTP ${res.status}，响应非 JSON）`,
+        res.status,
+      ),
+    );
   }
 
   if (!envelope || typeof envelope.ok !== "boolean") {
-    fail(new ApiError(E_INVALID_RESPONSE, `响应缺少统一信封（HTTP ${res.status}）`, res.status));
+    fail(
+      new ApiError(
+        E_INVALID_RESPONSE,
+        `${INVALID_RESPONSE_HINT}（HTTP ${res.status}，响应缺少统一信封）`,
+        res.status,
+      ),
+    );
   }
   if (!envelope.ok) {
     const body = envelope.error ?? { code: E_INVALID_RESPONSE, message: "未知服务端错误" };
@@ -91,6 +113,10 @@ function jsonInit(method: string, body: unknown): RequestInit {
 export const api = {
   /** 05-server §2.1 GET /api/projects */
   listProjects: () => apiRequest<ProjectsData>("/api/projects"),
+
+  /** 05-server §2.2 POST /api/projects（S11 新建项目表单） */
+  createProject: (body: NewProjectBody) =>
+    apiRequest<CreateProjectData>("/api/projects", jsonInit("POST", body)),
 
   /** 05-server §2.3 GET /api/projects/:slug/overview（S8 进度总览数据源） */
   getOverview: (slug: string) =>

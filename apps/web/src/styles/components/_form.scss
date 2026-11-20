@@ -1,4 +1,120 @@
-// 表单（预留：S7 新建需求/任务表单，06-web §3.4）
+// 表单（06-web §3.4/§11：校验联动 + 服务端再校验；S11 新建项目模态表单 NewProjectModal）
 .pm-form {
-  display: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  // period 起止并排
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  &__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pm-text-primary);
+  }
+
+  &__req,
+  &__opt {
+    margin-left: 6px;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--pm-text-tertiary);
+  }
+
+  &__input {
+    appearance: none;
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-radius);
+    background: var(--pm-bg-secondary);
+    color: var(--pm-text-primary);
+    font-size: 13px;
+    transition: border-color var(--pm-duration) var(--pm-easing);
+
+    &:focus {
+      outline: none;
+      border-color: var(--pm-accent);
+    }
+
+    &--invalid {
+      border-color: var(--pm-status-overdue);
+    }
+  }
+
+  // 辅助提示（如 slug 自动生成预览）
+  &__hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--pm-text-tertiary);
+    overflow-wrap: anywhere;
+  }
+
+  // 字段级错误（信封 error.field/issues 映射，S11）
+  &__error {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--pm-status-overdue);
+    overflow-wrap: anywhere;
+
+    // 表单级错误（服务端错误无字段信息时整体展示）
+    &--form {
+      margin-top: -4px;
+      padding: 8px 10px;
+      border: 1px solid var(--pm-status-overdue);
+      border-radius: var(--pm-radius);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  &__btn {
+    padding: 6px 18px;
+    border: 1px solid var(--pm-accent);
+    border-radius: var(--pm-radius);
+    font-size: 13px;
+    cursor: pointer;
+    transition: opacity var(--pm-duration) var(--pm-easing), color var(--pm-duration) var(--pm-easing);
+
+    &--primary {
+      background: var(--pm-accent);
+      color: #fff;
+
+      &:hover:not(:disabled) {
+        opacity: 0.9;
+      }
+    }
+
+    &--ghost {
+      background: transparent;
+      color: var(--pm-text-secondary);
+      border-color: var(--pm-border);
+
+      &:hover:not(:disabled) {
+        color: var(--pm-text-primary);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
 }

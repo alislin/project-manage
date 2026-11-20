@@ -13,6 +13,9 @@
     padding: 10px 14px;
     border-radius: var(--pm-radius);
     font-size: 13px;
+    line-height: 1.6;
+    // S11：E_INVALID_RESPONSE 排查指引等长文案完整换行展示，不截断
+    overflow-wrap: anywhere;
     color: #fff;
     background: var(--pm-status-overdue);
     box-shadow: var(--pm-shadow-lg);

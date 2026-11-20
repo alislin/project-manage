@@ -30,6 +30,24 @@ export interface ProjectsData {
   projects: ProjectSummary[];
 }
 
+// ---------------------------------------------------------------------------
+// S11 新建项目表单（05-server §2.2 POST /api/projects）
+// ---------------------------------------------------------------------------
+
+/** 05-server §2.2 POST /api/projects 请求体（status 服务端默认 active，表单不采集） */
+export interface NewProjectBody {
+  slug: string;
+  name: string;
+  period: [string, string];
+  tags?: string[];
+  status?: ProjectStatus;
+}
+
+/** 05-server §2.2 POST /api/projects 响应（201；created.id = slug，可据此跳转 /p/:slug） */
+export interface CreateProjectData {
+  created: { id: string; slug: string; path: string; mtimeMs: number };
+}
+
 /** 05-server §1.1 统一错误体 */
 export interface ApiErrorBody {
   code: string;

@@ -65,4 +65,21 @@ describe("apiRequest：统一信封解包与错误处理", () => {
     fetchMock.mockResolvedValue(new Response("<html>Internal Error</html>", { status: 500 }));
     await expect(apiRequest("/api/projects")).rejects.toMatchObject({ code: "E_INVALID_RESPONSE" });
   });
+
+  it("TC-06-030：HTTP 200 但响应非 JSON（代理打到别的应用返回 HTML）→ E_INVALID_RESPONSE 文案附排查指引", async () => {
+    fetchMock.mockResolvedValue(new Response("<html>Not PM</html>", { status: 200 }));
+    await expect(apiRequest("/api/projects")).rejects.toMatchObject({
+      code: "E_INVALID_RESPONSE",
+      status: 200,
+      message: expect.stringContaining("请运行 pm serve 或设置 PM_API_TARGET"),
+    });
+  });
+
+  it("TC-06-030：JSON 但缺统一信封（端口被其他 JSON 服务占用）→ E_INVALID_RESPONSE 同样附排查指引", async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ hello: "other-app" }, 200));
+    await expect(apiRequest("/api/projects")).rejects.toMatchObject({
+      code: "E_INVALID_RESPONSE",
+      message: expect.stringContaining("请运行 pm serve 或设置 PM_API_TARGET"),
+    });
+  });
 });
