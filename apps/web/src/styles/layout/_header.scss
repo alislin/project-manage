@@ -1,0 +1,54 @@
+// 顶部导航（06-web §2.1 Navbar）
+.pm-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 24px;
+  background: var(--pm-bg-secondary);
+  border-bottom: 1px solid var(--pm-border);
+
+  &__brand {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--pm-text-primary);
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  &__btn {
+    appearance: none;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: var(--pm-radius-sm);
+    border: 1px solid var(--pm-border);
+    background: var(--pm-bg-primary);
+    color: var(--pm-text-secondary);
+    font-size: 13px;
+    transition: color var(--pm-duration) var(--pm-easing), border-color var(--pm-duration) var(--pm-easing);
+
+    &:hover {
+      color: var(--pm-accent);
+      border-color: var(--pm-accent);
+    }
+
+    &--accent {
+      background: var(--pm-accent);
+      border-color: var(--pm-accent);
+      color: #fff;
+
+      &:hover {
+        color: #fff;
+        opacity: 0.92;
+      }
+    }
+  }
+}

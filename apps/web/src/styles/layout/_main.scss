@@ -1,0 +1,10 @@
+// 主内容区（06-web §8 layout/_main.scss）
+@use "../abstracts/variables" as *;
+@use "../abstracts/mixins" as *;
+
+.pm-main {
+  @include content-container;
+
+  min-height: calc(100vh - $header-height);
+  padding: 24px;
+}

@@ -1,0 +1,15 @@
+// 通用 mixin（按需扩充；保持简单不黑箱，06-web §8）
+@use "./variables" as *;
+
+/// 单行截断
+@mixin ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/// 内容容器居中
+@mixin content-container {
+  max-width: $content-max-width;
+  margin-inline: auto;
+}

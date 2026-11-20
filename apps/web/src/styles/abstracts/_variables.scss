@@ -1,0 +1,7 @@
+// SCSS 编译期变量（CSS 运行时变量见 themes/，06-web §9.1 清单）
+$font-stack: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+$mono-stack: "Cascadia Code", Consolas, "Courier New", monospace;
+
+// 布局
+$content-max-width: 1200px;
+$header-height: 52px;

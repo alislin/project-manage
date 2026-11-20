@@ -1,0 +1,75 @@
+// 项目工作台（06-web §1/§2.2 ProjectPage + Tab 占位）
+.pm-project {
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    border-radius: var(--pm-radius-lg);
+    background: var(--pm-bg-secondary);
+    border: 1px solid var(--pm-border);
+
+    &--empty {
+      justify-content: flex-start;
+    }
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--pm-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__missing {
+    font-size: 13px;
+    color: var(--pm-text-tertiary);
+  }
+
+  // Tab 内容占位
+  &__body {
+    padding: 16px;
+  }
+}
+
+// Tab 结构占位（S6 骨架，S7 实施看板/列表/图表）
+.pm-tab-placeholder {
+  padding: 48px 24px;
+  border: 1px dashed var(--pm-border);
+  border-radius: var(--pm-radius-lg);
+  background: var(--pm-bg-secondary);
+  text-align: center;
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--pm-text-primary);
+  }
+
+  &__hint {
+    margin: 8px auto 0;
+    max-width: 560px;
+    font-size: 13px;
+    color: var(--pm-text-secondary);
+  }
+
+  &__badge {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--pm-text-tertiary);
+    background: var(--pm-bg-tertiary);
+  }
+}

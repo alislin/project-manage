@@ -1,0 +1,12 @@
+// SCSS 函数（按需扩充）
+
+/// 数字安全夹取到 0..1（进度环等比例值）
+@function clamp01($n) {
+  @if $n < 0 {
+    @return 0;
+  }
+  @if $n > 1 {
+    @return 1;
+  }
+  @return $n;
+}

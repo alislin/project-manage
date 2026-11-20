@@ -1,0 +1,38 @@
+// 统一错误提示（06-web §2.1 ErrorToast）
+.pm-toast {
+  position: fixed;
+  top: 60px;
+  right: 16px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 360px;
+
+  &__item {
+    padding: 10px 14px;
+    border-radius: var(--pm-radius);
+    font-size: 13px;
+    color: #fff;
+    background: var(--pm-status-overdue);
+    box-shadow: var(--pm-shadow-lg);
+    cursor: pointer;
+    animation: pm-fade-in var(--pm-duration) var(--pm-easing);
+
+    &--info {
+      background: var(--pm-accent);
+    }
+  }
+}
+
+// TransitionGroup 进出场
+.pm-toast-fade-enter-active,
+.pm-toast-fade-leave-active {
+  transition: opacity var(--pm-duration) var(--pm-easing), transform var(--pm-duration) var(--pm-easing);
+}
+
+.pm-toast-fade-enter-from,
+.pm-toast-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}

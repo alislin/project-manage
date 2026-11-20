@@ -1,0 +1,27 @@
+// 动画（06-web §8：fade/slide/board 拖拽动画）
+
+// 拖拽卡片态（S7 看板使用）：缩放 + 阴影
+.pm-card--dragging {
+  opacity: 0.85;
+  transform: scale(1.02);
+  box-shadow: var(--pm-shadow-lg);
+}
+
+// 放置落位 0.2s 过渡（06-web §8，TC-06-027）
+.pm-card--settled {
+  transition: transform 0.2s var(--pm-easing), box-shadow 0.2s var(--pm-easing);
+}
+
+// 通用淡入
+@keyframes pm-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.pm-fade-in {
+  animation: pm-fade-in var(--pm-duration) var(--pm-easing);
+}

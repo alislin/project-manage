@@ -1,0 +1,80 @@
+// 多项目总览（06-web §1 HomePage：标题 + 卡片墙容器，TC-06-001/024）
+.pm-home {
+  &__header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  &__title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--pm-text-primary);
+  }
+
+  &__count {
+    font-size: 13px;
+    color: var(--pm-text-tertiary);
+  }
+
+  &__board {
+    min-height: 200px;
+  }
+
+  &__state {
+    padding: 48px 0;
+    text-align: center;
+    color: var(--pm-text-secondary);
+
+    &--error {
+      color: var(--pm-status-overdue);
+    }
+  }
+
+  &__retry {
+    appearance: none;
+    cursor: pointer;
+    margin-top: 12px;
+    padding: 6px 20px;
+    border-radius: var(--pm-radius-sm);
+    border: 1px solid var(--pm-border);
+    background: var(--pm-bg-primary);
+    color: var(--pm-text-secondary);
+    font-size: 13px;
+    transition: color var(--pm-duration) var(--pm-easing), border-color var(--pm-duration) var(--pm-easing);
+
+    &:hover {
+      color: var(--pm-accent);
+      border-color: var(--pm-accent);
+    }
+  }
+
+  // 空 vault 引导（TC-06-024）
+  &__empty {
+    padding: 48px 24px;
+    border: 1px dashed var(--pm-border);
+    border-radius: var(--pm-radius-lg);
+    background: var(--pm-bg-secondary);
+    text-align: center;
+  }
+
+  &__empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--pm-text-primary);
+  }
+
+  &__empty-hint {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--pm-text-secondary);
+  }
+
+  // 卡片墙（06-web §1）
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+}

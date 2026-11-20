@@ -1,0 +1,79 @@
+// 卡片（06-web §8 components/_card.scss：通用卡 + 项目卡）
+.pm-card {
+  background: var(--pm-bg-secondary);
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius);
+  box-shadow: var(--pm-shadow);
+  padding: 16px;
+}
+
+// 项目卡片（06-web §2.1 ProjectCard，TC-06-001）
+.pm-project-card {
+  background: var(--pm-bg-secondary);
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius-lg);
+  box-shadow: var(--pm-shadow);
+  padding: 16px;
+  cursor: pointer;
+  transition: box-shadow var(--pm-duration) var(--pm-easing), transform var(--pm-duration) var(--pm-easing);
+
+  &:hover,
+  &:focus-visible {
+    box-shadow: var(--pm-shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--pm-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__slug {
+    margin: 2px 0 12px;
+    font-size: 12px;
+    color: var(--pm-text-tertiary);
+  }
+
+  &__body {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__metrics {
+    display: flex;
+    flex: 1;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &__metric {
+    dt {
+      font-size: 12px;
+      color: var(--pm-text-secondary);
+    }
+
+    dd {
+      margin-top: 2px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--pm-text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    &--overdue dd {
+      color: var(--pm-status-overdue);
+    }
+  }
+}

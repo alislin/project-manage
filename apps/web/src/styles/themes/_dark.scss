@@ -1,0 +1,28 @@
+// 暗色主题（06-web §9.1 [data-theme="dark"] 覆盖清单）
+[data-theme="dark"] {
+  --pm-bg-primary: #0d1117;
+  --pm-bg-secondary: #161b22;
+  --pm-bg-tertiary: #21262d;
+  --pm-text-primary: #e6edf3;
+  --pm-text-secondary: #9ba3af;
+  --pm-text-tertiary: #6e7682;
+  --pm-border: rgba(255, 255, 255, 0.12);
+  --pm-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --pm-shadow-lg: 0 10px 32px rgba(0, 0, 0, 0.5);
+
+  /* 状态色：稍亮适配深色（06-web §9.1） */
+  --pm-status-active: #58a6ff;
+  --pm-status-paused: #d29922;
+  --pm-status-done: #3fb950;
+  --pm-status-archived: #8b949e;
+  --pm-status-pool: #e3b341;
+  --pm-status-reviewing: #ff8c3e;
+  --pm-status-accepted: #58a6ff;
+  --pm-status-rejected: #d29922;
+  --pm-status-todo: #8b949e;
+  --pm-status-doing: #58a6ff;
+  --pm-status-cancelled: #a9b1bd;
+  --pm-status-overdue: #f85149;
+  --pm-progress-done: #3fb950;
+  --pm-progress-rest: #30363d;
+}

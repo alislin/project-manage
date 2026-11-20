@@ -1,0 +1,22 @@
+// 全局（06-web §8 base/_global.scss）
+body {
+  background: var(--pm-bg-primary);
+  color: var(--pm-text-primary);
+  transition: background-color var(--pm-duration) var(--pm-easing), color var(--pm-duration) var(--pm-easing);
+  -webkit-font-smoothing: antialiased;
+}
+
+// 主题切换免闪烁：变量过渡由各组件自行声明 duration/easing
+:root {
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+// 焦点可见性（键盘可达）
+:focus-visible {
+  outline: 2px solid var(--pm-accent);
+  outline-offset: 2px;
+}

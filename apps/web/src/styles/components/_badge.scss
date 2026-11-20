@@ -1,0 +1,59 @@
+// 状态徽标（06-web §9.2/§10：枚举 → --pm-status-* 语义色，TC-06-023/025）
+.pm-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.7;
+  color: #fff;
+
+  &--active {
+    background: var(--pm-status-active);
+  }
+
+  &--paused {
+    background: var(--pm-status-paused);
+  }
+
+  &--done {
+    background: var(--pm-status-done);
+  }
+
+  &--archived {
+    background: var(--pm-status-archived);
+  }
+
+  &--pool {
+    background: var(--pm-status-pool);
+  }
+
+  &--reviewing {
+    background: var(--pm-status-reviewing);
+  }
+
+  &--accepted {
+    background: var(--pm-status-accepted);
+  }
+
+  &--rejected {
+    background: var(--pm-status-rejected);
+  }
+
+  &--todo {
+    background: var(--pm-status-todo);
+  }
+
+  &--doing {
+    background: var(--pm-status-doing);
+  }
+
+  &--cancelled {
+    background: var(--pm-status-cancelled);
+  }
+
+  &--neutral {
+    background: var(--pm-text-tertiary);
+  }
+}

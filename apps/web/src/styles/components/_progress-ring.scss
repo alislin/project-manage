@@ -1,0 +1,28 @@
+// 进度环（06-web §7.1：纯 CSS conic-gradient，不依赖图表库，TC-06-001）
+.pm-progress-ring {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  // 中心挖孔：与宿主容器背景同色（卡片/页头均为 --pm-bg-secondary）
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 7px;
+    border-radius: 50%;
+    background: var(--pm-bg-secondary);
+  }
+
+  &__value {
+    position: relative;
+    z-index: 1;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--pm-text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+}

@@ -1,0 +1,43 @@
+// 亮色主题（06-web §9.1 :root 变量清单）
+:root {
+  /* 组件层背景/文本 */
+  --pm-bg-primary: #ffffff;
+  --pm-bg-secondary: #f7f8fa;
+  --pm-bg-tertiary: #eef1f6;
+  --pm-text-primary: #1f2329;
+  --pm-text-secondary: #646a73;
+  --pm-text-tertiary: #8691a2;
+  --pm-border: rgba(0, 0, 0, 0.08);
+  --pm-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --pm-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* 状态色语义（06-web §10） */
+  --pm-status-active: #3b82f6;
+  --pm-status-paused: #a16207;
+  --pm-status-done: #16a34a;
+  --pm-status-archived: #6b7280;
+  --pm-status-pool: #f59e0b;
+  --pm-status-reviewing: #f97316;
+  --pm-status-accepted: #3b82f6;
+  --pm-status-rejected: #a16207;
+  --pm-status-todo: #94a3b8;
+  --pm-status-doing: #3b82f6;
+  --pm-status-cancelled: #64748b;
+  --pm-status-overdue: #ef4444;
+  --pm-progress-done: #16a34a;
+  --pm-progress-rest: #e5e7eb;
+
+  /* 优先级圆点（06-web §9.2） */
+  --pm-priority-p0: #ef4444;
+  --pm-priority-p1: #f97316;
+  --pm-priority-p2: #f59e0b;
+  --pm-priority-p3: #a16207;
+
+  /* 强调与形状/动效 */
+  --pm-accent: #3b82f6;
+  --pm-radius-sm: 4px;
+  --pm-radius: 8px;
+  --pm-radius-lg: 16px;
+  --pm-duration: 0.18s;
+  --pm-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
