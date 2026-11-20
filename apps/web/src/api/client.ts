@@ -7,6 +7,7 @@
 import type {
   ApiErrorBody,
   Envelope,
+  OverviewData,
   PatchStatusBody,
   PatchStatusData,
   ProjectsData,
@@ -90,6 +91,10 @@ function jsonInit(method: string, body: unknown): RequestInit {
 export const api = {
   /** 05-server §2.1 GET /api/projects */
   listProjects: () => apiRequest<ProjectsData>("/api/projects"),
+
+  /** 05-server §2.3 GET /api/projects/:slug/overview（S8 进度总览数据源） */
+  getOverview: (slug: string) =>
+    apiRequest<OverviewData>(`/api/projects/${encodeURIComponent(slug)}/overview`),
 
   /** 05-server §2.4 GET /api/projects/:slug/requirements */
   listRequirements: (slug: string) =>

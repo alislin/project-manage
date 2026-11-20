@@ -141,3 +141,32 @@ export interface PatchStatusData {
   updatedField: "updated" | "updated+completed";
   mtimeMs: number;
 }
+
+// ---------------------------------------------------------------------------
+// S8 进度总览（05-server §2.3 GET /api/projects/:slug/overview）
+// ---------------------------------------------------------------------------
+
+/** 05-server §2.3 overview 内嵌项目（02-core Project 索引条目 + mtimeMs；id = slug） */
+export interface OverviewProject {
+  id: string;
+  name: string;
+  status: ProjectStatus;
+  mtimeMs: number;
+}
+
+/** 05-server §2.3 totals：需求/任务总数与状态分布（漏斗/环形图数据源） */
+export interface OverviewTotals {
+  requirements: { total: number; byStatus: Partial<Record<ReqStatus, number>> };
+  tasks: { total: number; overdue: number; byStatus: Partial<Record<TaskStatus, number>>; onTrack: number };
+}
+
+/** 05-server §2.3 GET /api/projects/:slug/overview 载荷 */
+export interface OverviewData {
+  project: OverviewProject;
+  progress: Progress;
+  totals: OverviewTotals;
+  /** 需求交付漏斗汇总（06-web §7：done/total/rate） */
+  periods: { done: number; total: number; rate: number };
+  /** 索引构建时间（02-core §2.3 builtAt，可选） */
+  lastSync?: string;
+}

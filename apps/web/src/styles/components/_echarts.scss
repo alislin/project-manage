@@ -1,4 +1,19 @@
-// ECharts 容器（预留：S7 进度总览三图接入时启用，06-web §7）
-.pm-echarts {
-  display: none;
+// ECharts 图表容器（S8 进度总览四图接入，06-web §7）
+.pm-chart {
+  &__canvas {
+    width: 100%;
+  }
+
+  // 空态分支（TC-06-024）：虚线框 + 居中文案
+  &__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    border: 1px dashed var(--pm-border);
+    border-radius: var(--pm-radius);
+    background: var(--pm-bg-secondary);
+    color: var(--pm-text-tertiary);
+    font-size: 13px;
+  }
 }

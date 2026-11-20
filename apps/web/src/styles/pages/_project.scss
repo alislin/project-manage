@@ -43,8 +43,7 @@
 }
 
 // Tab 结构占位（S6 骨架，S7 实施看板/列表/图表）
-.pm-tab-placeholder {
-  padding: 48px 24px;
+.pm-tab-placeholder {  padding: 48px 24px;
   border: 1px dashed var(--pm-border);
   border-radius: var(--pm-radius-lg);
   background: var(--pm-bg-secondary);
@@ -71,5 +70,77 @@
     font-size: 12px;
     color: var(--pm-text-tertiary);
     background: var(--pm-bg-tertiary);
+  }
+}
+
+// 进度总览 Tab（S8，06-web §7 OverviewPage：汇总卡片 + 四图网格）
+.pm-overview {
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  &__stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 16px;
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-radius);
+    background: var(--pm-bg-secondary);
+
+    &-label {
+      font-size: 12px;
+      color: var(--pm-text-secondary);
+    }
+
+    &-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--pm-text-primary);
+
+      // 逾期 > 0 标红（06-web §9.2）
+      &--danger {
+        color: var(--pm-status-overdue);
+      }
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  &__cell {
+    padding: 16px;
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-radius-lg);
+    background: var(--pm-bg-primary);
+  }
+
+  &__cell-title {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--pm-text-primary);
+  }
+
+  &__hint {
+    padding: 24px;
+    font-size: 13px;
+    color: var(--pm-text-tertiary);
+
+    &--error {
+      color: var(--pm-status-overdue);
+    }
+  }
+
+  &__sync {
+    margin: 12px 4px 0;
+    font-size: 12px;
+    color: var(--pm-text-tertiary);
   }
 }
