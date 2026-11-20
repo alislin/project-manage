@@ -36,8 +36,8 @@ describe("S4 全局 --root（03-cli §1.1）", () => {
     const v = newRoot();
     writePmFile(v, "projects/proj/project.md", PROJECT_MD);
     const cli = path.join(process.cwd(), "dist", "index.js");
-    // cwd = packages/cli（无 pm.config.json）：不带 --root 必然 E_CONFIG_INVALID，
-    // 带 program 级 --root 后成功 → 证明 --root 覆盖 cwd 解析（03-cli §1.1）
+    // cwd = packages/cli（S13 后缺省可向上命中仓库根 pm.config.json）：显式 --root 直接使用
+    // 该目录、不向上查找（02-core §4.1），check 结果来自 --root 指定工程根（03-cli §1.1）
     const r = spawnSync(process.execPath, [cli, "--root", root, "check", "--json"], { encoding: "utf8" });
     expect(r.status).toBe(0);
     const parsed = JSON.parse(r.stdout);
@@ -63,14 +63,22 @@ describe("S4 全局 --root（03-cli §1.1）", () => {
     expect(parsed.count).toBe(0);
   });
 
-  it("不带 --root 且 cwd 无 pm.config.json → E_CONFIG_INVALID（exit 2）", () => {
+  it("不带 --root 且 cwd 祖先链无 pm.config.json → E_CONFIG_INVALID（exit 2）", () => {
     newRoot();
     const cli = path.join(process.cwd(), "dist", "index.js");
-    const r = spawnSync(process.execPath, [cli, "check", "--json"], { encoding: "utf8" });
-    expect(r.status).toBe(2);
-    const err = JSON.parse(r.stderr);
-    expect(err.ok).toBe(false);
-    expect(err.code).toBe("E_CONFIG_INVALID");
+    // S13 祖先链解析：仓库内 cwd 会向上命中仓库根配置 → 用仓库外空目录作 cwd 验证未命中分支
+    const base = path.join(os.tmpdir(), "opencode");
+    fs.mkdirSync(base, { recursive: true });
+    const emptyCwd = fs.mkdtempSync(path.join(base, "pm-cli-cwd-empty-"));
+    try {
+      const r = spawnSync(process.execPath, [cli, "check", "--json"], { encoding: "utf8", cwd: emptyCwd });
+      expect(r.status).toBe(2);
+      const err = JSON.parse(r.stderr);
+      expect(err.ok).toBe(false);
+      expect(err.code).toBe("E_CONFIG_INVALID");
+    } finally {
+      fs.rmSync(emptyCwd, { recursive: true, force: true });
+    }
   });
 
   it("--root 指向无 pm.config.json 的目录 → E_CONFIG_INVALID（exit 2）", () => {

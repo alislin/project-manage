@@ -276,6 +276,8 @@ export function loadConfig(projectRoot?: string): AppResult<Config> {
 
 > **注**：`vaultPath` 解析逻辑 = 优先 `pm.config.json`，否则从 `packages/core` 的祖先链找带 `PM/` 的仓库，再回退 `vaultPath = process.cwd()`（简述，实现见 config/index.ts）。关键点：vaultPath/pmRoot 必须解析到实际存在的 Obsidian Vault。
 
+> **注（S13 工程根祖先链解析）**：`projectRoot` 未显式传入时（CLI/MCP/server 缺省），从 `process.cwd()` 向上逐级目录查找 `pm.config.json`（至盘根止），命中即以该目录为工程根，全链未命中报 `E_CONFIG_INVALID`；显式传入（CLI `--root`、MCP/server 显式 root 参数）直接使用该目录，不向上查找。
+
 ### 4.2 `scanner/walk` — 扫描
 
 ```ts

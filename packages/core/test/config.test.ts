@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { loadConfig, RAW_CONFIG_DEFAULTS, ZConfig } from "../src/config";
 
-/** TC-02 · 02-core §4.1 loadConfig（P0 用例）+ 02-core §4.8 注（TC-02-025） */
+/** TC-02 · 02-core §4.1 loadConfig（P0 用例）+ 02-core §4.8 注（TC-02-025）+ S13 祖先链解析（TC-02-033~035） */
 
 /** 非源码产物测试根：优先 C:\Users\Aidee\AppData\Local\Temp\opencode（环境允许外部访问） */
 function makeTempRoot(prefix: string): string {
@@ -92,5 +92,50 @@ describe("TC-02 config", () => {
     expect(ZConfig.safeParse({ vaultPath: "v", pmRoot: "p" }).success).toBe(true);
     expect(ZConfig.safeParse({ vaultPath: "", pmRoot: "p" }).success).toBe(true); // OBS-5：空串允许，语义 = 工程根
     expect(ZConfig.safeParse({ vaultPath: "v" }).success).toBe(false); // pmRoot 缺失仍非法
+  });
+
+  it("TC-02-033: S13 祖先链解析——cwd 在工程根子目录（祖先链命中 pm.config.json）→ 以命中目录为工程根（02-core §4.1）", () => {
+    const root = makeTempRoot("root-ancestor-");
+    fs.writeFileSync(path.join(root, "pm.config.json"), JSON.stringify({ vaultPath: "", pmRoot: "PM" }));
+    const sub = path.join(root, "deep", "deeper");
+    fs.mkdirSync(sub, { recursive: true });
+    // 模拟 IDE 任务/子目录执行：不显式传 projectRoot，cwd = 工程根的深层子目录
+    const prevCwd = process.cwd();
+    process.chdir(sub);
+    try {
+      const r = loadConfig();
+      expect(r.ok).toBe(true);
+      if (r.ok) {
+        expect(r.value.vaultPath).toBe(root);
+        expect(r.value.pmRoot).toBe(path.join(root, "PM"));
+      }
+    } finally {
+      process.chdir(prevCwd);
+    }
+  });
+
+  it("TC-02-034: S13 显式 projectRoot 不向上查找——显式目录无 pm.config.json（祖先有）→ E_CONFIG_INVALID（02-core §4.1）", () => {
+    const root = makeTempRoot("root-explicit-noasc-");
+    fs.writeFileSync(path.join(root, "pm.config.json"), JSON.stringify({ vaultPath: "", pmRoot: "PM" }));
+    const sub = path.join(root, "sub");
+    fs.mkdirSync(sub, { recursive: true });
+    // 显式传 sub（等价 CLI --root / server 显式参数）：直接使用该目录，不向上命中 root 的配置
+    const r = loadConfig(sub);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error.code).toBe("E_CONFIG_INVALID");
+  });
+
+  it("TC-02-035: S13 盘根未命中——cwd 祖先链全程无 pm.config.json → E_CONFIG_INVALID（02-core §4.1）", () => {
+    // 临时目录在仓库外（祖先链至盘根均无 pm.config.json），模拟全链未命中
+    const dir = makeTempRoot("root-noconfig-anywhere-");
+    const prevCwd = process.cwd();
+    process.chdir(dir);
+    try {
+      const r = loadConfig();
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.error.code).toBe("E_CONFIG_INVALID");
+    } finally {
+      process.chdir(prevCwd);
+    }
   });
 });

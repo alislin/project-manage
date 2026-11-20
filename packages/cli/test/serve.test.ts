@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { makeVaultRoot, writePmFile, rmRetry } from "./helpers";
 
@@ -74,11 +75,23 @@ describe("S5 pm serve（03-cli §8）", () => {
   );
 
   it.skipIf(!hasDists)(
-    "pm serve 无 --root（cwd 无 pm.config.json）→ 立即退出 2（E_CONFIG_INVALID）",
+    "pm serve 无 --root（cwd 祖先链无 pm.config.json）→ 立即退出 2（E_CONFIG_INVALID）",
     () => {
-      const r = spawnSync(process.execPath, [cliDist, "serve", "--port", "0"], { encoding: "utf8", timeout: 8000 });
-      expect(r.status).toBe(2); // 03-cli §1.3：E_CONFIG_INVALID → 2
-      expect(r.stderr.trim().length).toBeGreaterThan(0);
+      // S13 祖先链解析：仓库内 cwd 会向上命中仓库根配置 → 用仓库外空目录作 cwd 验证未命中分支
+      const base = path.join(os.tmpdir(), "opencode");
+      fs.mkdirSync(base, { recursive: true });
+      const emptyCwd = fs.mkdtempSync(path.join(base, "pm-cli-serve-cwd-empty-"));
+      try {
+        const r = spawnSync(process.execPath, [cliDist, "serve", "--port", "0"], {
+          encoding: "utf8",
+          timeout: 8000,
+          cwd: emptyCwd,
+        });
+        expect(r.status).toBe(2); // 03-cli §1.3：E_CONFIG_INVALID → 2
+        expect(r.stderr.trim().length).toBeGreaterThan(0);
+      } finally {
+        fs.rmSync(emptyCwd, { recursive: true, force: true });
+      }
     },
     15000,
   );
