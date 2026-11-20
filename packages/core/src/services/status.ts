@@ -31,6 +31,27 @@ const LEGAL_TRANSITIONS: ReadonlySet<string> = new Set([
  */
 export const moveLocks = new Map<string, Promise<void>>();
 
+/**
+ * runExclusive（review-m1-r2 O1 / 05-server §6.2 外部写锁）：按路径互斥执行异步任务。
+ * 「读取链尾 + 替换链尾」在 get 与 set 之间无 await 的同步区间内完成（原子挂接）：
+ * 并发调用者各自把完成门闩接在「当时的链尾」上，随后才 await 旧链尾，
+ * 从而消除「先 get 再 await 链尾」用法的 TOCTOU（两个调用者读到同一链尾后并发执行）。
+ * - fn 抛异常时 finally 解闩，链尾仅 resolve 不 reject，后续排队者不受污染；
+ * - moveStatus（同步）内部同样向链尾挂接，两条入口在同一路径上严格串行（02-core §4.7.1）。
+ */
+export async function runExclusive<T>(relPath: string, fn: () => Promise<T> | T): Promise<T> {
+  const prev = moveLocks.get(relPath) ?? Promise.resolve();
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => (release = resolve));
+  moveLocks.set(relPath, prev.then(() => gate));
+  try {
+    await prev;
+    return await fn();
+  } finally {
+    release();
+  }
+}
+
 /** 校验流转合法性（design §4.7, 01-数据规范 §3.1–3.3 表） */
 export function isValidTransition(from: string, to: string, index: VaultIndex): boolean {
   return LEGAL_TRANSITIONS.has(`${from}->${to}`);

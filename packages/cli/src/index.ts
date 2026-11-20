@@ -14,6 +14,7 @@ import { runMove } from "./commands/move.js";
 import { runStats } from "./commands/stats.js";
 import { runCheck } from "./commands/check.js";
 import { runInboxList, runInboxProcess, runInboxArchive } from "./commands/inbox.js";
+import { runServe } from "./commands/serve.js";
 
 const program = new Command();
 program.name("pm").description(`${CORE_NAME} 台账 CLI`).version("0.1.0");
@@ -42,7 +43,7 @@ function printCommands(): void {
       "  stats\t聚合统计（03-cli §5）\n" +
       "  check\t一致性检查（03-cli §6）\n" +
       "  inbox list|process|archive\tinbox 整理（03-cli §7）\n" +
-      "  serve\t启动 Web 服务（待后续阶段）\n" +
+      "  serve\t启动 Web 服务（03-cli §8：REST API + SSE + 静态托管）\n" +
       "全局选项: --json（结构化输出）、--root <path>（工程根，03-cli §1.1）",
   );
 }
@@ -227,10 +228,24 @@ inboxCmd.action(() => {
   });
 }
 
-// 占位：serve（待后续阶段实现）
-program.command("serve").description("serve（占位，待后续阶段实现）").action(() => {
-  console.error("serve 尚未实现");
-  process.exitCode = 2;
-});
+// serve（03-cli §8, 05-server §7）：--port/-p、--host/-H、--root（全局/子命令级）
+{
+  const cmd = program
+    .command("serve")
+    .description("启动 Web 服务：REST API + SSE + 静态托管（03-cli §8, 05-server）")
+    .option("-p, --port <n>", "监听端口（默认 3000，03-cli §8）", (v: string): number => {
+      const n = Number(v);
+      if (!Number.isInteger(n) || n < 0 || n > 65535) {
+        console.error(`--port 需为 0-65535 的整数: ${v}`);
+        process.exit(2);
+      }
+      return n;
+    })
+    .option("-H, --host <host>", "监听地址（默认 127.0.0.1，03-cli §8）");
+  addRootOption(cmd);
+  cmd.action(async (opts: { port?: number; host?: string; root?: string }) => {
+    process.exitCode = await runServe({ port: opts.port, host: opts.host, root: resolveRoot(opts) });
+  });
+}
 
 await program.parseAsync(process.argv);

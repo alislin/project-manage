@@ -26,11 +26,25 @@ export type {
   AppError,
 } from "./types.js";
 export { loadConfig, ZConfig, RAW_CONFIG_DEFAULTS } from "./config.js";
+// 纯新增导出（S5 server 阶段消费）：schema 校验器与错误码常量（02-core §5 / §3.1）
+export { IsoDate, Slug, ProjectStatus, ReqStatus, TaskStatus, Priority } from "./schema.js";
+export type { Project, Requirement, Task, InboxEntry } from "./schema.js";
+export {
+  E_CONFIG_INVALID,
+  E_USAGE,
+  E_NOT_FOUND,
+  E_VALIDATION,
+  E_INVALID_TRANSITION,
+  E_CONFLICT,
+  E_SEQ_EXHAUSTED,
+  E_IO,
+} from "./errors.js";
 export { scanTree, classifyFile, type Classification } from "./scanner.js";
 export { parseFile, type ParseResult } from "./parser.js";
 export { buildIndex, reindexFile, deriveRequirementTasks, parseWikiLinks } from "./indexer.js";
-export { moveStatus, isValidTransition, moveLocks } from "./services/status.js";
+export { moveStatus, isValidTransition, moveLocks, runExclusive } from "./services/status.js";
 export { deriveStats } from "./services/stats.js";
+export { search } from "./services/search.js";
 export { runCheck } from "./services/check.js";
 export { listInbox, archiveInboxEntry } from "./services/inbox.js";
 export { allocateId } from "./services/seq.js";

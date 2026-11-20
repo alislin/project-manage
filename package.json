@@ -7,7 +7,7 @@
     "apps/web"
   ],
   "scripts": {
-    "build": "npm run build --workspace @pm/core && npm run build --workspace @pm/cli && npm run build --workspace @pm/mcp && npm run build --workspace @pm/server && npm run build --workspace pm-web",
+    "build": "npm run build --workspace @pm/core && npm run build --workspace @pm/server && npm run build --workspace @pm/cli && npm run build --workspace @pm/mcp && npm run build --workspace pm-web",
     "test": "npm run test --workspace @pm/core && npm run test --workspace @pm/cli && npm run test --workspace @pm/mcp && npm run test --workspace @pm/server",
     "dev:server": "npm run dev --workspace @pm/server",
     "dev:web": "npm run dev --workspace pm-web"

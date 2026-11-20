@@ -34,6 +34,23 @@ export function pathExists(vault: string, rel: string): boolean {
   return fs.existsSync(path.join(vault, "PM", rel));
 }
 
+/** 同步 sleep（Atomics.wait；清理目录时等待 Windows 句柄释放） */
+export function sleepSync(ms: number): void {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+/** 带重试删除（子进程/句柄释放有延迟） */
+export function rmRetry(p: string): void {
+  for (let i = 0; i < 8; i++) {
+    try {
+      fs.rmSync(p, { recursive: true, force: true });
+      return;
+    } catch {
+      sleepSync(50 * (i + 1));
+    }
+  }
+}
+
 /** 返回当前日期（YYYY-MM-DD，07-workflow §1 日期约定） */
 export function today(): string {
   const d = new Date();
