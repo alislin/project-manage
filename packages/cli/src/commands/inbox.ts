@@ -35,10 +35,16 @@ export interface InboxArchiveArgs {
   root?: string;
 }
 
-/** 人类可读输出（03-cli §7.3 示例格式） */
+/** 人类可读输出（03-cli §7.3 示例格式；P1-1：未识别条目带 ⚠ 提示，指引补 frontmatter） */
 function renderList(result: InboxListResult): void {
   console.log(`📥 inbox 未处理（${result.count} 条）`);
   result.entries.forEach((e, i) => {
+    if (e.unrecognized) {
+      const reason = e.unrecognizedReason === "invalid-frontmatter" ? "frontmatter 无法识别" : "无 frontmatter";
+      console.log(`  ${i + 1}. ⚠ 未识别碎片  file=${e.file}（${reason}，补齐 type/id/created 后可整理）`);
+      console.log(`     首行: ${e.bodyFirstLine}`);
+      return;
+    }
     console.log(`  ${i + 1}. ${e.id}  ${e.created}  file=${e.file}`);
     console.log(`     首行: ${e.bodyFirstLine}`);
   });

@@ -109,4 +109,65 @@ describe("TC-03 services/inbox（pm inbox 共用实现）", () => {
     if (res.ok) return;
     expect(res.error.code).toBe("E_NOT_FOUND");
   });
+
+  it("archiveInboxEntry 归档写回 created 仍为 YYYY-MM-DD 纯日期（P2-1，m2-acceptance §8）", () => {
+    // 无引号 YAML 日期被 js-yaml 解析为 Date，gray-matter 往返曾改写为 ISO 时间戳（2026-11-20T00:00:00.000Z）
+    const index = makeInboxIndex([
+      {
+        rel: "inbox/2026-11-20-idea.md",
+        content: `---
+type: inbox
+id: INBOX-inbox-001
+slug: inbox
+created: 2026-11-20
+tags: ["想法"]
+source: 人工收集
+archived: null
+---
+支持把需求导出为周报 markdown
+`,
+      },
+    ]);
+    const res = archiveInboxEntry(index, "INBOX-inbox-001");
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    const archived = fs.readFileSync(res.value.archived.to, "utf8");
+    // created 保持 YYYY-MM-DD 纯日期（js-yaml 引号包裹亦可），无 ISO 时间戳
+    const m = /^created: '?(\d{4}-\d{2}-\d{2})'?$/m.exec(archived);
+    expect(m).not.toBeNull();
+    expect(m?.[1]).toBe("2026-11-20");
+    expect(archived).not.toContain("T00:00:00");
+    // 其余字段与正文不受影响
+    expect(archived).toContain("id: INBOX-inbox-001");
+    expect(archived).toContain(`archived: '${today()}'`);
+    expect(archived).toContain("支持把需求导出为周报 markdown");
+  });
+
+  it("listInbox 将无 frontmatter/类型无法识别的 inbox 文件列为未识别条目（P1-1，m2-acceptance §8）", () => {
+    const index = makeInboxIndex([
+      { rel: "inbox/2026-11-19-idea.md", content: INBOX_MD("INBOX-inbox-001", "2026-11-19", "需要加 OAuth 登录") },
+      // 纯文本碎片：无 frontmatter（§7.3 步骤 1"可不带 frontmatter"）
+      { rel: "inbox/2026-11-20-idea.md", content: "支持把需求导出为周报 markdown，最好能直接贴进工作总结\n" },
+      // 类型无法识别：frontmatter 存在但 type 不是已知类型 → broken(parse)
+      { rel: "inbox/2026-11-18-note.md", content: "---\ntype: note\ncreated: 2026-11-18\n---\n类型无法识别的碎片\n" },
+    ]);
+    const result = listInbox(index);
+    expect(result.count).toBe(3);
+
+    const plain = result.entries.find((e) => e.file === "inbox/2026-11-20-idea.md");
+    expect(plain?.unrecognized).toBe(true);
+    expect(plain?.unrecognizedReason).toBe("no-frontmatter");
+    expect(plain?.id).toBe("");
+    expect(plain?.bodyFirstLine).toBe("支持把需求导出为周报 markdown，最好能直接贴进工作总结");
+    expect(plain?.status).toBe("active");
+
+    const note = result.entries.find((e) => e.file === "inbox/2026-11-18-note.md");
+    expect(note?.unrecognized).toBe(true);
+    expect(note?.unrecognizedReason).toBe("invalid-frontmatter");
+
+    // 已识别条目照常列出且在前（created 降序），不带未识别标记
+    expect(result.entries[0].id).toBe("INBOX-inbox-001");
+    expect(result.entries[0].unrecognized).toBeUndefined();
+    expect(result.entries[0].unrecognizedReason).toBeUndefined();
+  });
 });

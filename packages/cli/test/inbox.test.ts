@@ -136,4 +136,24 @@ describe("TC-03 inbox", () => {
     const code = await runInboxArchive({ root, id: "bad-id" });
     expect(code).toBe(1);
   });
+
+  it("pm inbox list 纯文本碎片（无 frontmatter）以未识别条目出现在输出中（P1-1）", async () => {
+    const v = newRoot();
+    writePmFile(v, "inbox/2026-11-20-idea.md", "支持把需求导出为周报 markdown，最好能直接贴进工作总结\n");
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const code = await runInboxList({ root, json: true });
+    expect(code).toBe(0);
+    const parsed = JSON.parse(logSpy.mock.calls.map((c) => String(c[0])).join(""));
+    expect(parsed.count).toBe(1);
+    expect(parsed.entries[0].file).toBe("inbox/2026-11-20-idea.md");
+    expect(parsed.entries[0].unrecognized).toBe(true);
+    expect(parsed.entries[0].unrecognizedReason).toBe("no-frontmatter");
+    expect(parsed.entries[0].bodyFirstLine).toBe("支持把需求导出为周报 markdown，最好能直接贴进工作总结");
+    // 人类可读输出同样可见（代理可感知）
+    const code2 = await runInboxList({ root });
+    expect(code2).toBe(0);
+    const human = logSpy.mock.calls.map((c) => String(c[0])).join("\n");
+    expect(human).toContain("未识别碎片");
+    expect(human).toContain("inbox/2026-11-20-idea.md");
+  });
 });

@@ -114,4 +114,19 @@ describe("TC-03 validate", () => {
     expect(code).toBe(0);
     expect(pathExists(v, "projects/我的应用-v2/project.md")).toBe(true);
   });
+
+  it("pm validate checkedFiles 排除 inbox/archive 归档产物（P2-2）", async () => {
+    const v = newRoot();
+    writePmFile(v, "projects/proj/project.md", PROJECT_MD);
+    writePmFile(v, "projects/proj/requirements/REQ-proj-001.md", REQ_001_MD);
+    // 归档产物（不入索引、不算台账文件，01-数据规范 §7.5）
+    writePmFile(v, "inbox/archive/2026-11-19-idea.md", "---\ntype: inbox\nid: INBOX-inbox-001\ncreated: \"2026-11-19\"\narchived: \"2026-11-20\"\n---\n已归档碎片\n");
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const code = await runValidate({ root, json: true });
+    expect(code).toBe(0);
+    const parsed = JSON.parse(logSpy.mock.calls.map((c) => String(c[0])).join(""));
+    expect(parsed.checkedFiles).toBe(2); // 口径 = 台账文件数（4-1 归档文件不计入）
+    expect(parsed.ok).toBe(true);
+    expect(parsed.errors).toEqual([]);
+  });
 });

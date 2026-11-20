@@ -182,6 +182,10 @@ export interface InboxListItem {
   bodyFirstLine: string;
   /** 未归档 vs 已归档（03-cli §7.2 status，01-数据规范 §7.4） */
   status: "active" | "archived";
+  /** 未识别条目（P1-1，01-数据规范 §7.5）：无 frontmatter 或类型无法识别的 inbox 文件，id/created 不可用 */
+  unrecognized?: true;
+  /** 未识别原因（unrecognized 条目提供）：no-frontmatter = 无 frontmatter；invalid-frontmatter = frontmatter 无法识别 */
+  unrecognizedReason?: "no-frontmatter" | "invalid-frontmatter";
 }
 
 export interface InboxListResult {

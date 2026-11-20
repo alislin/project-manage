@@ -23,9 +23,15 @@ interface CliError {
 
 /** 筛选要校验的 md 文件（03-cli §2.1：目录 = 该目录下所有 md） */
 function filterEntries(index: VaultIndex, files?: string[]): Set<string> {
-  if (!files || files.length === 0) return new Set(index.scan.entries.map((e) => e.absPath));
-  const out = new Set<string>();
+  const out: Set<string> = new Set();
   for (const e of index.scan.entries) {
+    // P2-2（m2-acceptance §8）：inbox/archive/ 归档产物不入索引、不算台账文件
+    // （01-数据规范 §7.5，design §5.2.7 classifyFile "archived"），从 checkedFiles 口径排除
+    if (e.relPath.startsWith("inbox/archive/")) continue;
+    if (!files || files.length === 0) {
+      out.add(e.absPath);
+      continue;
+    }
     for (const f of files) {
       const abs = path.isAbsolute(f) ? f : path.resolve(index.config.pmRoot, f);
       const dirPrefix = abs.endsWith(path.sep) ? abs : `${abs}${path.sep}`;
